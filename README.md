@@ -1,10 +1,9 @@
 # AsteroidZ
 WideScreen version of AsteroidZ made with SpriteKit for macOS and AI.
-Game Created by Logos InkPen LLC. Designer, Programmer, Prompt, Sound Engineer: Todd Bruss (c) 2025.
-Play your favorite Space Rocks Game on the Big Screen!
-Tribute to Atari 1979 game which I first played it at Skateworld in Pewaukee, WI.
 
-Extra ship every 5000 pts.. we will probably change this as it's pretty EZ.
+Experience the ultimate cosmic showdown on your Mac with this breathtaking reimagining of a classic! AsteroidZ delivers heart pounding space combat across your entire screen, combining nostalgic arcade thrills with cutting edge AI powered gameplay. This masterful tribute to the legendary 1979 Atari phenomenon first encountered at Skateworld in Pewaukee WI has been transformed into an immersive modern spectacle that respects its origins while pushing boundaries. Survive the void, shatter space rocks and earn additional ships every 5000 points in this visually stunning evolution that will keep you on the edge of your seat!
+
+Game Created by Logos InkPen LLC. Designer, Programmer, Prompt, Sound Engineer: Todd Bruss (c) 2025.
 
 Controls Briefing:
 
