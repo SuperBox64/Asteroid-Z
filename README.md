@@ -16,5 +16,4 @@ ESC key toggles fullscreen
 
 <img width="1920" height="1080" alt="Screenshot 2025-08-07 at 9 23 29 PM" src="https://github.com/user-attachments/assets/be300e70-4bc7-44f3-b10d-6664bb49ac02" />
 <img width="1920" height="1080" alt="Screenshot 2025-08-07 at 9 23 43 PM" src="https://github.com/user-attachments/assets/3b7108ee-de3e-4664-9daa-53469fce784a" />
-<img width="1920" height="1080" alt="Screenshot 2025-08-07 at 9 25 21 PM" src="https://github.com/user-attachments/assets/72827095-18dd-4140-9e2b-af8c28938c85" />
 <img width="1920" height="1080" alt="Screenshot 2025-08-07 at 9 24 42 PM" src="https://github.com/user-attachments/assets/aef8c954-d047-4e21-8afc-9fcf6ffe4e5e" />
