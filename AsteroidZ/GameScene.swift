@@ -1277,13 +1277,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         
         // Handle ship collisions
-        if (contact.bodyA.categoryBitMask == shipCategory || 
+        if (contact.bodyA.categoryBitMask == shipCategory ||
             contact.bodyB.categoryBitMask == shipCategory) {
-            if !isRespawning {
+            // Don't process player death while title screen / game-over screen is up
+            if !isRespawning && !isGameOver && player?.isHidden == false {
                 playerDied()
             }
         }
-        
+
         // Add check for player bullets hitting saucer bullets
         if collision == (bulletCategory | saucerBulletCategory) {
             let bulletPos = contact.bodyA.node?.position ?? contact.bodyB.node?.position ?? .zero
@@ -1314,6 +1315,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         gameOverLabels.removeAll()
         
+        // Clear the title-screen / game-over playfield so the player
+        // respawns in a clear center on the very first frame
+        for asteroid in asteroids {
+            asteroid.removeFromParent()
+        }
+        asteroids.removeAll()
+        activeSaucer?.removeFromParent()
+        activeSaucer = nil
+        for child in children where child.name == "SaucerBullet" || child.name == "PlayerBullet" {
+            child.removeFromParent()
+        }
+        
         // Reset game state
         isGameOver = false
         score = 0
@@ -1331,10 +1344,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         level = 1  // Reset level
         
+        // Spawn the level-1 asteroid field after the player is in
+        // place so they don't collide on spawn
+        for _ in 0..<4 {
+            spawnAsteroid(size: .large)
+        }
+        
         saucerSpawnEnabled = true
         scheduleSaucerSpawn()  // Start initial saucer spawn cycle
     }
-    
+
     func startBackgroundBeats() {
         // Stop any existing timer
         beatTimer?.invalidate()
