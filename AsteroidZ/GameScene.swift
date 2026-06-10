@@ -163,11 +163,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         GCController.startWirelessControllerDiscovery()
         
         NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleControllerDidConnect),
-            name: .GCControllerDidConnect,
-            object: nil
-        )
+            forName: .GCControllerDidConnect,
+            object: nil,
+            queue: nil
+        ) { [weak self] notification in
+            self?.handleControllerDidConnect(notification)
+        }
         
         // Check for already connected controller
         if let controller = GCController.controllers().first {
@@ -175,7 +176,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
-    @objc func handleControllerDidConnect(_ notification: Notification) {
+    func handleControllerDidConnect(_ notification: Notification) {
         if let gameController = notification.object as? GCController {
             configureGameController(gameController)
             gamePadConnected = true
@@ -1410,7 +1411,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         
         // Update beat interval label (blue) - safely
-        beatIntervalLabel?.text = "BEAT INTERVAL \(String(format: "%.2f", beatInterval))"
+        beatIntervalLabel?.text = "BEAT INTERVAL \(Double(Int(beatInterval * 100)) / 100)"
         
         // Show interval changed message (red) - safely
         if oldInterval != beatInterval {

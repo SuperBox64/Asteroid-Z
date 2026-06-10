@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AsteroidZ · SuperBox64 SpriteKit Swift on WASM</title>
+  <style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden;
+      display: flex; align-items: center; justify-content: center; }
+    #game { width: min(100vw, calc(100vh * 1920 / 1080)); aspect-ratio: 1920 / 1080;
+      background: #000; object-fit: contain; outline: none; }
+    #game:fullscreen, #game:-webkit-full-screen { width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="1920" height="1080" tabindex="0"></canvas>
+  <script>
+    window.WASMWEB = { logicalWidth: 1920, logicalHeight: 1080, wasmUrl: 'asteroidz.wasm', assetRoot: 'assets', title: 'ASTEROIDZ' };
+  </script>
+  <script src="runtime.js"></script>
+</body>
+</html>
