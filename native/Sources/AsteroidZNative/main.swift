@@ -182,10 +182,12 @@ final class Host {
         if audioDevice == 0 {
             audioDevice = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nil)
             guard audioDevice != 0 else { return }
+            _ = SDL_ResumeAudioDevice(audioDevice)
         }
         var spec = soundSpecs[i]
         guard let stream = SDL_CreateAudioStream(&spec, nil) else { return }
-        _ = SDL_SetAudioStreamGain(stream, volume)
+        // the ABI carries volume as 0-100 (the web runtime divides the same way)
+        _ = SDL_SetAudioStreamGain(stream, max(0, min(1, volume / 100)))
         _ = SDL_PutAudioStreamData(stream, buf, Int32(soundLens[i]))
         if !loop { _ = SDL_FlushAudioStream(stream) }
         _ = SDL_BindAudioStream(audioDevice, stream)
