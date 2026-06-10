@@ -39,6 +39,7 @@ struct Mat {
 final class Host {
     var renderer: OpaquePointer? = nil
     var mat = Mat()
+    var base = Mat()
     var stack: [Mat] = []
     var alpha: Float = 1
     var events: [(Int32, Int32, Int32, Int32, Int32)] = []
@@ -47,7 +48,9 @@ final class Host {
     var soundBufs: [UnsafeMutablePointer<UInt8>?] = [nil]
     var soundLens: [UInt32] = [0]
     var soundNames: [String: Int32] = [:]
-    var streams: [OpaquePointer] = []
+    var audioDevice: UInt32 = 0
+    var voiceStreams: [OpaquePointer] = []
+    var voiceLoops: [Int32] = []
     var storeKeys: [String] = []
     var storeVals: [String] = []
     var assetDir = ""
@@ -171,19 +174,45 @@ final class Host {
         return id
     }
 
+    // One real device; every voice is a stream bound to it and the device
+    // mixes. Finished voices are reaped each frame; loops refill on drain.
     func play(_ id: Int32, volume: Float, loop: Bool) {
         let i = Int(id)
         guard i > 0, i < soundBufs.count, let buf = soundBufs[i] else { return }
+        if audioDevice == 0 {
+            audioDevice = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nil)
+            guard audioDevice != 0 else { return }
+        }
         var spec = soundSpecs[i]
-        guard let stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, nil, nil) else { return }
+        guard let stream = SDL_CreateAudioStream(&spec, nil) else { return }
         _ = SDL_SetAudioStreamGain(stream, volume)
         _ = SDL_PutAudioStreamData(stream, buf, Int32(soundLens[i]))
-        if loop { _ = SDL_PutAudioStreamData(stream, buf, Int32(soundLens[i])) }
-        _ = SDL_FlushAudioStream(stream)
-        _ = SDL_ResumeAudioStreamDevice(stream)
-        streams.append(stream)
-        if streams.count > 24 {
-            SDL_DestroyAudioStream(streams.removeFirst())
+        if !loop { _ = SDL_FlushAudioStream(stream) }
+        _ = SDL_BindAudioStream(audioDevice, stream)
+        voiceStreams.append(stream)
+        voiceLoops.append(loop ? id : 0)
+    }
+
+    func reapVoices() {
+        var i = 0
+        while i < voiceStreams.count {
+            let stream = voiceStreams[i]
+            let queued = SDL_GetAudioStreamQueued(stream)
+            let loopId = voiceLoops[i]
+            if loopId > 0 {
+                let li = Int(loopId)
+                if queued < Int32(soundLens[li]) / 2, let buf = soundBufs[li] {
+                    _ = SDL_PutAudioStreamData(stream, buf, Int32(soundLens[li]))
+                }
+                i += 1
+            } else if queued <= 0, SDL_GetAudioStreamAvailable(stream) <= 0 {
+                SDL_UnbindAudioStream(stream)
+                SDL_DestroyAudioStream(stream)
+                voiceStreams.remove(at: i)
+                voiceLoops.remove(at: i)
+            } else {
+                i += 1
+            }
         }
     }
 
@@ -278,7 +307,17 @@ let trampoline: wasmtime_func_callback_t = { env, _, args, nargs, results, nresu
     var ret: Int32 = 0
     switch fn {
     case 0: // gfx_clear
-        host.mat = Mat()
+        // Render in NATIVE pixels: the logical->pixel scale plus letterbox
+        // offset live in the base matrix (the web runtime's baseScale/offX/
+        // offY), so geometry stays crisp at any window or fullscreen size.
+        var pw: Int32 = 0
+        var ph: Int32 = 0
+        _ = SDL_GetRenderOutputSize(host.renderer, &pw, &ph)
+        let sc = min(Float(pw) / LOGICAL_W, Float(ph) / LOGICAL_H)
+        host.base = Mat(a: sc, b: 0, c: 0, d: sc,
+                        e: (Float(pw) - LOGICAL_W * sc) / 2,
+                        f: (Float(ph) - LOGICAL_H * sc) / 2)
+        host.mat = host.base
         host.stack = []
         host.alpha = 1
         let c = host.fcolor(uval(args, 0))
@@ -382,6 +421,19 @@ func sfKey(_ scancode: UInt32) -> Int32 {
     }
 }
 
+func toLogical(_ window: OpaquePointer?, _ x: Float, _ y: Float) -> (Int32, Int32) {
+    var w: Int32 = 0
+    var h: Int32 = 0
+    _ = SDL_GetWindowSize(window, &w, &h)
+    let sc = min(Float(w) / LOGICAL_W, Float(h) / LOGICAL_H)
+    let ox = (Float(w) - LOGICAL_W * sc) / 2
+    let oy = (Float(h) - LOGICAL_H * sc) / 2
+    return (Int32((x - ox) / sc), Int32((y - oy) / sc))
+}
+
+let windowResizable: UInt64 = 0x20
+let windowHighPixelDensity: UInt64 = 0x2000
+
 // MARK: - main
 
 @main
@@ -410,11 +462,12 @@ enum Main {
         var window: OpaquePointer? = nil
         var renderer: OpaquePointer? = nil
         let ok = "AsteroidZ - Embedded Swift native (SDL3 + wasmtime)".withCString {
-            SDL_CreateWindowAndRenderer($0, 1280, 720, 0, &window, &renderer)
+            SDL_CreateWindowAndRenderer($0, 1920, 1080,
+                                        windowResizable | windowHighPixelDensity,
+                                        &window, &renderer)
         }
         guard ok else { fatalError("SDL_CreateWindowAndRenderer failed") }
-        _ = SDL_SetRenderLogicalPresentation(renderer, Int32(LOGICAL_W), Int32(LOGICAL_H),
-                                             SDL_LOGICAL_PRESENTATION_LETTERBOX)
+        _ = SDL_SetRenderVSync(renderer, 1)
         _ = SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND)
         host.renderer = renderer
 
@@ -506,12 +559,16 @@ enum Main {
         var last = SDL_GetTicksNS()
         var sentStart = false
         var sentThrust = false
+        var fullscreen = false
 
         while running {
             var e = SDL_Event()
             while SDL_PollEvent(&e) {
                 if e.type == SDL_EVENT_QUIT.rawValue {
                     running = false
+                } else if e.type == SDL_EVENT_KEY_DOWN.rawValue, e.key.scancode == SDL_SCANCODE_F, !e.key.`repeat` {
+                    fullscreen = !fullscreen
+                    _ = SDL_SetWindowFullscreen(window, fullscreen)
                 } else if e.type == SDL_EVENT_KEY_DOWN.rawValue || e.type == SDL_EVENT_KEY_UP.rawValue {
                     let sf = sfKey(e.key.scancode.rawValue)
                     if sf >= 0, !e.key.`repeat` {
@@ -520,12 +577,12 @@ enum Main {
                         host.events.append((t, sf, shift, 0, 0))
                     }
                 } else if e.type == SDL_EVENT_MOUSE_BUTTON_DOWN.rawValue || e.type == SDL_EVENT_MOUSE_BUTTON_UP.rawValue {
-                    _ = SDL_ConvertEventToRenderCoordinates(renderer, &e)
                     let t: Int32 = e.type == SDL_EVENT_MOUSE_BUTTON_DOWN.rawValue ? 9 : 10
-                    host.events.append((t, 0, Int32(e.button.x), Int32(e.button.y), 0))
+                    let (lx, ly) = toLogical(window, e.button.x, e.button.y)
+                    host.events.append((t, 0, lx, ly, 0))
                 } else if e.type == SDL_EVENT_MOUSE_MOTION.rawValue {
-                    _ = SDL_ConvertEventToRenderCoordinates(renderer, &e)
-                    host.events.append((11, Int32(e.motion.x), Int32(e.motion.y), 0, 0))
+                    let (lx, ly) = toLogical(window, e.motion.x, e.motion.y)
+                    host.events.append((11, lx, ly, 0, 0))
                 }
             }
 
@@ -537,6 +594,7 @@ enum Main {
             // memory can grow mid-play; re-derive the base every frame
             host.memoryBase = wasmtime_memory_data(context, &memExt.of.memory)
             call("frame", Double(dt))
+            host.reapVoices()
             _ = SDL_RenderPresent(renderer)
 
             frames += 1
