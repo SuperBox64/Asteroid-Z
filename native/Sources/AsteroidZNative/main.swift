@@ -188,9 +188,12 @@ final class Host {
         guard let stream = SDL_CreateAudioStream(&spec, nil) else { return }
         // the ABI carries volume as 0-100 (the web runtime divides the same way)
         _ = SDL_SetAudioStreamGain(stream, max(0, min(1, volume / 100)))
+        // bind BEFORE queueing: binding re-targets the stream's output format
+        // to the device and discards any already-converted data, so data put
+        // first simply evaporates (verified: queued drops to 0 instantly)
+        _ = SDL_BindAudioStream(audioDevice, stream)
         _ = SDL_PutAudioStreamData(stream, buf, Int32(soundLens[i]))
         if !loop { _ = SDL_FlushAudioStream(stream) }
-        _ = SDL_BindAudioStream(audioDevice, stream)
         voiceStreams.append(stream)
         voiceLoops.append(loop ? id : 0)
     }
