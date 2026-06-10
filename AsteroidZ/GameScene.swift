@@ -32,6 +32,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var asteroidSizes: [ObjectIdentifier: AsteroidSize] = [:]
     private var controlsButton: SKNode?
     private var controlsButtonRect = CGRect.zero
+    private var startButton: SKNode?
+    private var startButtonRect = CGRect.zero
     private var velocity = CGVector(dx: 0, dy: 0)
     private var asteroids = [SKShapeNode]()
     
@@ -765,9 +767,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 isSpaceKeyDown = true
                 fireBullet()
             }
-        case 8:       // 'c' cycles the on-screen control mode
-            AZControlMode.advance()
-            buildTouchControls()
         default:
             break
         }
@@ -919,6 +918,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         wrapPlayer()
         
         controlsButton?.isHidden = !isGameOver
+        startButton?.isHidden = !isGameOver
 
         // Handle thrust flames
         if thrustDirection > 0 {
@@ -2731,9 +2731,30 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func buildControlsButton() {
+        startButton?.removeFromParent()
+        let sb = SKNode()
+        sb.zPosition = 902
+        sb.alpha = 0.85
+        let sLetters = drawVectorLetter("START", at: .zero)
+        sb.addChild(sLetters)
+        let sBounds = sLetters.calculateAccumulatedFrame()
+        sLetters.position = CGPoint(x: -sBounds.midX, y: -sBounds.midY)
+        let sw = sBounds.width + 52
+        let sOutline = SKShapeNode(rect: CGRect(x: -sw / 2, y: -32, width: sw, height: 64))
+        sOutline.strokeColor = SKColor(white: 1, alpha: 0.8)
+        sOutline.lineWidth = 2
+        sOutline.fillColor = .clear
+        sb.addChild(sOutline)
+        sb.position = CGPoint(x: size.width / 2, y: 250)
+        addChild(sb)
+        startButton = sb
+        startButtonRect = CGRect(x: sb.position.x - sw / 2, y: sb.position.y - 32, width: sw, height: 64)
+        sb.isHidden = !isGameOver
+
         controlsButton?.removeFromParent()
         let box = SKNode()
         box.zPosition = 902
+        box.alpha = 0.85
         let text = "CONTROLS \(AZControlMode.current.label)"
         let letters = drawVectorLetter(text, at: .zero)
         box.addChild(letters)
@@ -2829,18 +2850,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func showControlModeLabel(_ text: String) {
         modeLabel?.removeFromParent()
         let label = SKLabelNode(fontNamed: "Helvetica")
-        label.text = "CONTROLS \(text) · C TO CHANGE"
+        label.text = "GAME DESIGN BY TODD BRUSS"
         label.fontSize = 28
-        label.fontColor = SKColor(white: 1, alpha: 0.6)
+        label.fontColor = SKColor(white: 1, alpha: 0.85)
         label.position = CGPoint(x: size.width / 2, y: 60)
         label.zPosition = 901
         addChild(label)
         modeLabel = label
-        label.run(SKAction.sequence([
-            SKAction.wait(forDuration: 2.2),
-            SKAction.fadeOut(withDuration: 0.6),
-            SKAction.removeFromParent()
-        ]))
     }
 
     private func applyStick(_ p: CGPoint) {
@@ -2881,26 +2897,25 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func controlTouchBegan(finger: Int, at p: CGPoint, fromTouch: Bool = true) {
-        if isGameOver, controlsButton?.isHidden == false, controlsButtonRect.contains(p) {
-            AZControlMode.advance()
-            buildTouchControls()
-            return
-        }
-        let mode = AZControlMode.current
-        if mode.isHidden {
-            if fromTouch, !UserDefaults.standard.bool(forKey: AZControlMode.chosenKey) {
+        if isGameOver {
+            if controlsButton?.isHidden == false, controlsButtonRect.contains(p) {
+                AZControlMode.advance()
+                buildTouchControls()
+                return
+            }
+            // START button, or any tap/click on the title, plays. A first
+            // touch on a controls-less setup brings up the stick for mobile.
+            if fromTouch, AZControlMode.current.isHidden,
+               !UserDefaults.standard.bool(forKey: AZControlMode.chosenKey) {
                 AZControlMode.set(.stickRight)
                 buildTouchControls()
             }
+            titleScreen?.removeFromParent()
+            restartGame()
             return
         }
-        if isGameOver {
-            if hypot(Double(p.x - fireCenter.x), Double(p.y - fireCenter.y)) <= Double(controlRadius) {
-                titleScreen?.removeFromParent()
-                restartGame()
-            }
-            return
-        }
+        let mode = AZControlMode.current
+        if mode.isHidden { return }
         if hypot(Double(p.x - stickCenter.x), Double(p.y - stickCenter.y)) <= Double(controlRadius) {
             stickFinger = finger
             applyStick(p)
@@ -2909,11 +2924,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if hypot(Double(p.x - fireCenter.x), Double(p.y - fireCenter.y)) <= Double(controlRadius) {
             fireBullet()
             return
-        }
-        if let label = modeLabel, label.parent != nil,
-           abs(p.x - label.position.x) < 320, abs(p.y - label.position.y) < 50 {
-            AZControlMode.advance()
-            buildTouchControls()
         }
     }
 
