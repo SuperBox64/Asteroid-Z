@@ -2869,10 +2869,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         stickThumb?.position = stickCenter
     }
 
-    func controlTouchBegan(finger: Int, at p: CGPoint) {
+    func controlTouchBegan(finger: Int, at p: CGPoint, fromTouch: Bool = true) {
         let mode = AZControlMode.current
         if mode.isHidden {
-            if !UserDefaults.standard.bool(forKey: AZControlMode.chosenKey) {
+            if fromTouch, !UserDefaults.standard.bool(forKey: AZControlMode.chosenKey) {
                 AZControlMode.set(.stickRight)
                 buildTouchControls()
             }
@@ -2914,6 +2914,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     override func touchMoved(finger: Int, at p: CGPoint) { controlTouchMoved(finger: finger, at: p) }
     override func touchEnded(finger: Int, at p: CGPoint) { controlTouchEnded(finger: finger, at: p) }
     #endif
+
+    override func mouseDown(with event: NSEvent) {
+        controlTouchBegan(finger: -1, at: event.location(in: self), fromTouch: false)
+    }
+    override func mouseDragged(with event: NSEvent) {
+        controlTouchMoved(finger: -1, at: event.location(in: self))
+    }
+    override func mouseUp(with event: NSEvent) {
+        controlTouchEnded(finger: -1, at: event.location(in: self))
+    }
 }
 
 // MARK: - On-screen control mode (hidden by default on desktop; first touch
