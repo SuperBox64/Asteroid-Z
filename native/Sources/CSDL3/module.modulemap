@@ -1,0 +1,5 @@
+module CSDL3 {
+    header "/opt/homebrew/include/SDL3/SDL.h"
+    link "SDL3"
+    export *
+}

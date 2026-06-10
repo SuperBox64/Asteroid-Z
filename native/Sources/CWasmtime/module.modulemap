@@ -1,0 +1,5 @@
+module CWasmtime {
+    header "/opt/homebrew/include/wasmtime.h"
+    link "wasmtime"
+    export *
+}
