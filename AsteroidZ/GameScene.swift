@@ -1021,6 +1021,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func spawnSplitAsteroids(at position: CGPoint, size: AsteroidSize, count: Int,
                              parentSpeed: CGFloat = 0) {
+        let speedBand: ClosedRange<CGFloat> = size == .medium ? 170...340 : 225...450
         let splitAngles: [CGFloat] = [0, .pi] // Opposite directions
         
         for i in 0..<count {
@@ -1056,7 +1057,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 newAsteroid.physicsBody?.allowsRotation = true
                 
                 // Slower initial speed for colliding asteroids
-                let speed = max(CGFloat.random(in: 200...400), parentSpeed * 1.3)
+                let speed = max(CGFloat.random(in: speedBand), parentSpeed * 1.3)
                 let splitAngle = splitAngles[i] + CGFloat.random(in: -0.5...0.5)
                 let velocity = CGVector(dx: cos(splitAngle) * speed, dy: sin(splitAngle) * speed)
                 newAsteroid.physicsBody?.velocity = velocity
@@ -1072,7 +1073,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 newAsteroid.physicsBody?.collisionBitMask = roidCategory
                 
                 // Ensure Roids keep moving with constant velocity
-                let speed = max(CGFloat.random(in: 200...400), parentSpeed * 1.3)
+                let speed = max(CGFloat.random(in: speedBand), parentSpeed * 1.3)
                 let splitAngle = splitAngles[i] + CGFloat.random(in: -0.5...0.5)
                 let velocity = CGVector(dx: cos(splitAngle) * speed, dy: sin(splitAngle) * speed)
                 newAsteroid.physicsBody?.velocity = velocity
@@ -1682,7 +1683,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             
             // Random direction and speed
             let angle = CGFloat.random(in: 0...(2 * .pi))
-            let speed = CGFloat.random(in: 120...320)
+            let speed = CGFloat.random(in: 132...352)
             let dx = cos(angle) * speed
             let dy = sin(angle) * speed
             
