@@ -1,32 +1,19 @@
 # AsteroidZ native host — Embedded Swift end to end
 
-No browser. No webview. No JavaScript. **No Swift stdlib on either side.**
+The canonical native backend sources live in
+`asteroidz-web/Packages/superbox64-spritekit/native/`:
 
-```
-┌────────────────────────────┐     ┌──────────────────────────────┐
-│ asteroidz-embedded.wasm    │     │ asteroidz-native (188 KB)    │
-│ Embedded Swift game        │ ──► │ Embedded Swift host          │
-│ (507 KB, same file the     │     │ SDL3 + wasmtime via C        │
-│  website serves)           │     │ interop                      │
-└────────────────────────────┘     └──────────────────────────────┘
-```
+- `wasmtime-host.swift` — the wasmtime cartridge host (permutation 2)
+- `sdl3-backend.swift` — the direct SDL3 backend (permutation 3)
+- `CSDL3/` and `CWasmtime/` — cross-platform module maps for SDL3 and wasmtime
+- `build-wasmtime-host.sh` — builds the wasmtime host
+- `build-native-game.sh` — builds the direct native binary
 
-The game wasm is the identical artifact the website serves; the web build is
-untouched. The host implements KitABI's `env.*` surface on SDL3: a Canvas2D-
-compatible matrix stack, thick polylines via `SDL_RenderGeometry`, the SFML
-event vocabulary from SDL events, WAV voices on SDL audio streams, and the
-persistence store as a tsv file. wasmtime's C API runs the module with WASI
-Preview 1 (Swift `print` lands on stdout).
-
-## Build & run
+The `build.sh` in this directory is a thin wrapper that delegates to the
+canonical build script. See `asteroidz-web/Packages/superbox64-spritekit/native/README.md`
+for full documentation.
 
 ```sh
-brew install sdl3 wasmtime
-./build.sh
-./asteroidz-native                       # window: arrows/WASD + Space, C = coin
-ASTEROIDZ_SELFTEST=4 ./asteroidz-native  # auto-play 4s, screenshot, exit
-ASTEROIDZ_WASM=path.wasm ./asteroidz-native
+./build.sh                       # delegates to build-wasmtime-host.sh
+./asteroidz-wasmtime-host        # loads asteroidz-embedded.wasm via wasmtime
 ```
-
-Controls, persistence keys, and behavior match the web build exactly — it is
-the same cartridge in a different console.
