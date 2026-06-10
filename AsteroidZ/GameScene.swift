@@ -971,6 +971,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     // Add these new methods for asteroid splitting
     func splitAsteroid(_ asteroid: SKShapeNode, awardPoints: Bool = true) {
+        let pv = asteroid.physicsBody?.velocity ?? .zero
+        let parentSpeed = sqrt(pv.dx * pv.dx + pv.dy * pv.dy)
         if let size = asteroidSizes.removeValue(forKey: ObjectIdentifier(asteroid)) {
             switch size {
             case .large:
@@ -1004,9 +1006,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             // Split into smaller asteroids
             switch size {
             case .large:
-                spawnSplitAsteroids(at: asteroid.position, size: .medium, count: 2)
+                spawnSplitAsteroids(at: asteroid.position, size: .medium, count: 2,
+                                    parentSpeed: parentSpeed)
             case .medium:
-                spawnSplitAsteroids(at: asteroid.position, size: .small, count: 2)
+                spawnSplitAsteroids(at: asteroid.position, size: .small, count: 2,
+                                    parentSpeed: parentSpeed)
             case .small:
                 return
             }
@@ -1015,7 +1019,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
-    func spawnSplitAsteroids(at position: CGPoint, size: AsteroidSize, count: Int) {
+    func spawnSplitAsteroids(at position: CGPoint, size: AsteroidSize, count: Int,
+                             parentSpeed: CGFloat = 0) {
         let splitAngles: [CGFloat] = [0, .pi] // Opposite directions
         
         for i in 0..<count {
@@ -1051,7 +1056,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 newAsteroid.physicsBody?.allowsRotation = true
                 
                 // Slower initial speed for colliding asteroids
-                let speed = CGFloat.random(in: 100...200)  // Reduced from 200...400
+                let speed = max(CGFloat.random(in: 100...200), parentSpeed * 1.3)
                 let splitAngle = splitAngles[i] + CGFloat.random(in: -0.5...0.5)
                 let velocity = CGVector(dx: cos(splitAngle) * speed, dy: sin(splitAngle) * speed)
                 newAsteroid.physicsBody?.velocity = velocity
@@ -1067,7 +1072,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 newAsteroid.physicsBody?.collisionBitMask = roidCategory
                 
                 // Ensure Roids keep moving with constant velocity
-                let speed = CGFloat.random(in: 100...200)
+                let speed = max(CGFloat.random(in: 100...200), parentSpeed * 1.3)
                 let splitAngle = splitAngles[i] + CGFloat.random(in: -0.5...0.5)
                 let velocity = CGVector(dx: cos(splitAngle) * speed, dy: sin(splitAngle) * speed)
                 newAsteroid.physicsBody?.velocity = velocity
