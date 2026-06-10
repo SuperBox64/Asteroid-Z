@@ -27,6 +27,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var stickRotating = 0
     private var stickThrusting = false
     private var modeLabel: SKLabelNode?
+    // Asteroid sizes keyed by node identity (Apple's userData is Any-typed,
+    // which Embedded Swift forbids; a typed side table works on every platform)
+    private var asteroidSizes: [ObjectIdentifier: AsteroidSize] = [:]
     private var controlsButton: SKNode?
     private var controlsButtonRect = CGRect.zero
     private var velocity = CGVector(dx: 0, dy: 0)
@@ -181,8 +184,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             forName: .GCControllerDidConnect,
             object: nil,
             queue: nil
-        ) { [weak self] notification in
-            self?.handleControllerDidConnect(notification)
+        ) { notification in
+            self.handleControllerDidConnect(notification)
         }
         
         // Check for already connected controller
@@ -202,45 +205,45 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         guard let gamepad = controller.extendedGamepad else { return }
         
         // Configure D-pad
-        gamepad.dpad.valueChangedHandler = { [weak self] _, xValue, _ in
-            self?.handleDirectionalInput(x: xValue)
+        gamepad.dpad.valueChangedHandler = { _, xValue, _ in
+            self.handleDirectionalInput(x: xValue)
         }
         
         // Configure left stick - same controls as D-pad
-        gamepad.leftThumbstick.valueChangedHandler = { [weak self] _, xValue, _ in
-            self?.handleDirectionalInput(x: xValue)
+        gamepad.leftThumbstick.valueChangedHandler = { _, xValue, _ in
+            self.handleDirectionalInput(x: xValue)
         }
         
         // A button for firing
-        gamepad.buttonA.pressedChangedHandler = { [weak self] _, _, pressed in
+        gamepad.buttonA.pressedChangedHandler = { _, _, pressed in
             if pressed {
-                self?.fireBullet()
+                self.fireBullet()
             }
         }
         
-        gamepad.buttonB.pressedChangedHandler = { [weak self] _, _, pressed in
+        gamepad.buttonB.pressedChangedHandler = { _, _, pressed in
             if pressed {
-                self?.fireBullet()
+                self.fireBullet()
             }
         }
         
-        gamepad.buttonX.pressedChangedHandler = { [weak self] _, _, pressed in
+        gamepad.buttonX.pressedChangedHandler = { _, _, pressed in
             if pressed {
-                self?.thrustDirection = CGFloat(1)
-                self?.showThrustFlame()
+                self.thrustDirection = CGFloat(1)
+                self.showThrustFlame()
             } else {
-                self?.thrustDirection = 0
-                self?.hideThrustFlame()
+                self.thrustDirection = 0
+                self.hideThrustFlame()
             }
         }
         
-        gamepad.buttonY.pressedChangedHandler = { [weak self] _, _, pressed in
+        gamepad.buttonY.pressedChangedHandler = { _, _, pressed in
             if pressed {
-                self?.thrustDirection = CGFloat(-1)
-                self?.showReverseFlame()
+                self.thrustDirection = CGFloat(-1)
+                self.showReverseFlame()
             } else {
-                self?.thrustDirection = 0
-                self?.hideReverseFlame()
+                self.thrustDirection = 0
+                self.hideReverseFlame()
             }
         }
     }
@@ -412,9 +415,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
        
         
         // Spawn first saucer immediately
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {  // 5 second initial delay
+        run(SKAction.sequence([SKAction.wait(forDuration: 5.0), SKAction.run {  // 5 second initial delay
             self.spawnSaucer(forcedSize: .large)  // Force first saucer to be large
-        }
+        }]))
         
         // Start regular saucer timer
         startSaucerTimer()
@@ -481,8 +484,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         saucerTimer?.invalidate()
         
         // Create new timer
-        saucerTimer = Timer.scheduledTimer(withTimeInterval: baseSaucerInterval, repeats: true) { [weak self] _ in
-            self?.spawnSaucer()
+        saucerTimer = Timer.scheduledTimer(withTimeInterval: baseSaucerInterval, repeats: true) { _ in
+            self.spawnSaucer()
         }
         
         // Add to RunLoop
@@ -587,7 +590,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 }
                 
                 // Check distance from other large asteroids
-                for asteroid in asteroids where asteroid.userData?["size"] as? AsteroidSize == .large {
+                for asteroid in asteroids where asteroidSizes[ObjectIdentifier(asteroid)] == .large {
                     let distance = hypot(asteroid.position.x - testPosition.x, asteroid.position.y - testPosition.y)
                     if distance < safeRadius {
                         positionIsSafe = false
@@ -628,9 +631,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         asteroid.strokeColor = .white
         asteroid.lineWidth = 2.0
         
-        // Initialize userData dictionary
-        asteroid.userData = NSMutableDictionary()
-        asteroid.userData?["size"] = size
+        asteroidSizes[ObjectIdentifier(asteroid)] = size
         
         if isNextAster {
             asteroid.fillColor = .black     // TEMP: Color Asters red (was .black)
@@ -852,21 +853,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         velocity.dx *= 0.99
         velocity.dy *= 0.99
         
-        // Update bullets
-        for bullet in bullets {
-            if let velocity = bullet.userData?["velocity"] as? CGVector {
-                bullet.position.x += velocity.dx
-                bullet.position.y += velocity.dy
-                
-                // Remove bullets that are off screen
-                if !frame.contains(bullet.position) {
-                    bullet.removeFromParent()
-                    if let index = bullets.firstIndex(of: bullet) {
-                        bullets.remove(at: index)
-                    }
-                }
-            }
-        }
         
         // ONLY bullets can destroy asteroids
         for bullet in bullets {
@@ -960,7 +946,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     // Add these new methods for asteroid splitting
     func splitAsteroid(_ asteroid: SKShapeNode) {
-        if let size = asteroid.userData?["size"] as? AsteroidSize {
+        if let size = asteroidSizes[ObjectIdentifier(asteroid)] {
             switch size {
             case .large:
                 run(bangLargeSound)
@@ -1019,9 +1005,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let startY = position.y + sin(offsetAngle) * offsetDistance
             newAsteroid.position = CGPoint(x: startX, y: startY)
             
-            // Initialize userData dictionary
-            newAsteroid.userData = NSMutableDictionary()
-            newAsteroid.userData?["size"] = size
+            asteroidSizes[ObjectIdentifier(newAsteroid)] = size
             
             // Use toggle for exact 50/50 split
             newAsteroid.fillColor = isNextAster ? .black : .clear  // TEMP: Color split asteroids
@@ -1103,9 +1087,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         } else {
             lives -= 1
             isRespawning = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-                self?.tryRespawn()
-            }
+            run(SKAction.sequence([SKAction.wait(forDuration: 2.0), SKAction.run {
+                self.tryRespawn()
+            }]))
         }
     }
     
@@ -1241,14 +1225,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             thrustSound.autoplayLooped = false
             
             // Remove sound after throb finishes
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            run(SKAction.sequence([SKAction.wait(forDuration: 1.2), SKAction.run {
                 thrustSound.removeFromParent()
-            }
+            }]))
         } else {
             // Try again after a short delay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-                self?.tryRespawn()
-            }
+            run(SKAction.sequence([SKAction.wait(forDuration: 0.1), SKAction.run {
+                self.tryRespawn()
+            }]))
         }
     }
     
@@ -1288,7 +1272,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                     saucerDestroyed(targetNode)
                 }
                 // Check if it's an asteroid
-                else if let _ = targetNode.userData?["size"] as? AsteroidSize {
+                else if asteroidSizes[ObjectIdentifier(targetNode)] != nil {
                         splitAsteroid(targetNode)
                     }
                 }
@@ -1385,8 +1369,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         currentBeat = 2
         
         // Create new timer that repeats
-        let newTimer = Timer.scheduledTimer(withTimeInterval: beatInterval, repeats: true) { [weak self] _ in
-            self?.playNextBeat()
+        let newTimer = Timer.scheduledTimer(withTimeInterval: beatInterval, repeats: true) { _ in
+            self.playNextBeat()
         }
         beatTimer = newTimer
         RunLoop.current.add(newTimer, forMode: .common)
@@ -1437,14 +1421,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if oldInterval != beatInterval {
             intervalChangedLabel?.text = "INTERVAL CHANGED"
             // Clear the message after 1 second
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                self?.intervalChangedLabel?.text = ""
-            }
+            run(SKAction.sequence([SKAction.wait(forDuration: 1.0), SKAction.run {
+                self.intervalChangedLabel?.text = ""
+            }]))
             
             // Update timer if interval changed - FIXED TIMER CREATION
             beatTimer?.invalidate()
-            let newTimer = Timer.scheduledTimer(withTimeInterval: beatInterval, repeats: true) { [weak self] _ in
-                self?.playNextBeat()
+            let newTimer = Timer.scheduledTimer(withTimeInterval: beatInterval, repeats: true) { _ in
+                self.playNextBeat()
             }
             beatTimer = newTimer
             RunLoop.current.add(newTimer, forMode: .common)
@@ -1529,11 +1513,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(saucer)
         
         // Remove after 15 seconds with proper cleanup
-        DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
-            if self?.activeSaucer != nil {
-                self?.removeSaucer()
+        run(SKAction.sequence([SKAction.wait(forDuration: 15), SKAction.run {
+            if self.activeSaucer != nil {
+                self.removeSaucer()
             }
-        }
+        }]))
         
         // Start shooting immediately for both sizes
         startSaucerShooting(size: size)
@@ -1547,8 +1531,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Set shooting interval based on size
         let interval = size == .large ? 1.5 : 0.8  // Large shoots slower but more accurately
         
-        saucerShootTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            self?.saucerShoot(isLarge: size == .large)
+        saucerShootTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { _ in
+            self.saucerShoot(isLarge: size == .large)
         }
     }
     
@@ -1596,9 +1580,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Remove bullet when it goes off screen
         let removeWhenOffscreen = SKAction.repeatForever(SKAction.sequence([
             SKAction.wait(forDuration: 0.1),
-            SKAction.run { [weak self] in
-                guard let self = self else { return }
-                if !self.frame.contains(bullet.position) {
+            SKAction.run {
+                                if !self.frame.contains(bullet.position) {
                     bullet.removeFromParent()
                 }
             }
@@ -1821,7 +1804,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func updateSaucerSpawnRate() {
         // Count small asteroids
         let smallAsteroidCount = asteroids.filter { asteroid in
-            if let size = asteroid.userData?["size"] as? AsteroidSize {
+            if let size = asteroidSizes[ObjectIdentifier(asteroid)] {
                 return size == .small
             }
             return false
@@ -1847,8 +1830,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Update timer if it exists
         if let currentTimer = saucerTimer {
             currentTimer.invalidate()
-            saucerTimer = Timer.scheduledTimer(withTimeInterval: newInterval, repeats: true) { [weak self] _ in
-                self?.spawnSaucer()
+            saucerTimer = Timer.scheduledTimer(withTimeInterval: newInterval, repeats: true) { _ in
+                self.spawnSaucer()
             }
         }
     }
@@ -2114,8 +2097,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Blink effect for INSERT COIN letters only
         let blink = SKAction.sequence([
             SKAction.wait(forDuration: 0.5),
-            SKAction.run { [weak self] in
-                self?.titleScreen?.children.forEach { node in
+            SKAction.run {
+                self.titleScreen?.children.forEach { node in
                     if node.position.y < 0 {  // Only affect INSERT COIN letters
                         node.isHidden.toggle()
                     }
@@ -2300,9 +2283,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         )
         
         let waitAction = SKAction.wait(forDuration: adjustedInterval)
-        let spawnAction = SKAction.run { [weak self] in
-            self?.spawnSaucer()
-            self?.scheduleSaucerSpawn()  // Schedule next spawn
+        let spawnAction = SKAction.run {
+            self.spawnSaucer()
+            self.scheduleSaucerSpawn()  // Schedule next spawn
         }
         
         run(SKAction.sequence([waitAction, spawnAction]), withKey: "spawnSaucer")
@@ -2587,8 +2570,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Blink effect for PRESS SPACE
         let blink = SKAction.sequence([
             SKAction.wait(forDuration: 0.5),
-            SKAction.run { [weak self] in
-                self?.gameOverScreen?.children.forEach { node in
+            SKAction.run {
+                self.gameOverScreen?.children.forEach { node in
                     if node.position.y < 0 {  // Only affect PRESS SPACE letters
                         node.isHidden.toggle()
                     }
