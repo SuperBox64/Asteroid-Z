@@ -27,6 +27,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var stickRotating = 0
     private var stickThrusting = false
     private var modeLabel: SKLabelNode?
+    private var controlsButton: SKNode?
+    private var controlsButtonRect = CGRect.zero
     private var velocity = CGVector(dx: 0, dy: 0)
     private var asteroids = [SKShapeNode]()
     
@@ -930,6 +932,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Wrap player position
         wrapPlayer()
         
+        controlsButton?.isHidden = !isGameOver
+
         // Handle thrust flames
         if thrustDirection > 0 {
             showThrustFlame()
@@ -1751,19 +1755,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func showReverseFlame() {
-        // Reset alpha and show flames
-        thrustNode?.alpha = 1.0
+        // Reverse shows only the nose flame; the rear thrust triangle stays off
+        hideThrustFlame()
         reverseFlameNode?.alpha = 1.0
-        thrustNode?.isHidden = false
         reverseFlameNode?.isHidden = false
         
-        // Animate both flames
+        // Animate the nose flame
         let flicker = SKAction.sequence([
             SKAction.fadeAlpha(to: 0.3, duration: 0.1),
             SKAction.fadeAlpha(to: 1.0, duration: 0.1)
         ])
         
-        thrustNode?.run(SKAction.repeatForever(flicker))
         reverseFlameNode?.run(SKAction.repeatForever(flicker))
     }
     
@@ -2745,7 +2747,33 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         buildTouchControls()
     }
 
+    func buildControlsButton() {
+        controlsButton?.removeFromParent()
+        let box = SKNode()
+        box.zPosition = 902
+        let text = "CONTROLS \(AZControlMode.current.label)"
+        let letters = drawVectorLetter(text, at: .zero)
+        box.addChild(letters)
+        let bounds = letters.calculateAccumulatedFrame()
+        letters.position = CGPoint(x: -bounds.midX, y: -bounds.midY)
+        let pad: CGFloat = 26
+        let w = bounds.width + pad * 2
+        let h: CGFloat = 64
+        let outline = SKShapeNode(rect: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
+        outline.strokeColor = SKColor(white: 1, alpha: 0.8)
+        outline.lineWidth = 2
+        outline.fillColor = .clear
+        box.addChild(outline)
+        box.position = CGPoint(x: size.width / 2, y: 150)
+        addChild(box)
+        controlsButton = box
+        controlsButtonRect = CGRect(x: box.position.x - w / 2, y: box.position.y - h / 2,
+                                    width: w, height: h)
+        box.isHidden = !isGameOver
+    }
+
     func buildTouchControls() {
+        buildControlsButton()
         controlLayer.removeAllChildren()
         controlLayer.removeFromParent()
         stickThumb = nil
@@ -2870,6 +2898,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func controlTouchBegan(finger: Int, at p: CGPoint, fromTouch: Bool = true) {
+        if isGameOver, controlsButton?.isHidden == false, controlsButtonRect.contains(p) {
+            AZControlMode.advance()
+            buildTouchControls()
+            return
+        }
         let mode = AZControlMode.current
         if mode.isHidden {
             if fromTouch, !UserDefaults.standard.bool(forKey: AZControlMode.chosenKey) {
