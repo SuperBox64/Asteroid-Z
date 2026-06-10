@@ -14,6 +14,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var player: SKShapeNode!
     private var rotationRate: CGFloat = 0
     private var thrustDirection: CGFloat = 0
+
+    // MARK: - On-screen touch controls (stick/dpad + fire on the opposite side)
+    private let controlLayer = SKNode()
+    private var stickCenter = CGPoint.zero
+    private var fireCenter = CGPoint.zero
+    private let controlRadius: CGFloat = 170
+    private let controlDeadzone: CGFloat = 40
+    private var stickThumb: SKShapeNode?
+    private var dpadWedges: [String: SKShapeNode] = [:]
+    private var stickFinger: Int? = nil
+    private var stickRotating = 0
+    private var stickThrusting = false
+    private var modeLabel: SKLabelNode?
     private var velocity = CGVector(dx: 0, dy: 0)
     private var asteroids = [SKShapeNode]()
     
@@ -749,6 +762,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 isSpaceKeyDown = true
                 fireBullet()
             }
+        case 8:       // 'c' cycles the on-screen control mode
+            AZControlMode.advance()
+            buildTouchControls()
         default:
             break
         }
@@ -2721,5 +2737,217 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         letterNode.position = position
         return letterNode
+    }
+
+    // MARK: - On-screen controls (ported pattern from Boss-Man)
+
+    override func didMove(to view: SKView) {
+        buildTouchControls()
+    }
+
+    func buildTouchControls() {
+        controlLayer.removeAllChildren()
+        controlLayer.removeFromParent()
+        stickThumb = nil
+        dpadWedges = [:]
+        let mode = AZControlMode.current
+        showControlModeLabel(mode.label)
+        guard mode.showsControl else { return }
+
+        controlLayer.zPosition = 900
+        addChild(controlLayer)
+        let inset: CGFloat = 300
+        let widgetX = mode.onLeft ? inset : size.width - inset
+        stickCenter = CGPoint(x: widgetX, y: 300)
+        fireCenter = CGPoint(x: mode.onLeft ? size.width - inset : inset, y: 300)
+
+        let ring = SKShapeNode(circleOfRadius: controlRadius)
+        ring.position = stickCenter
+        ring.strokeColor = SKColor(white: 1, alpha: 0.45)
+        ring.lineWidth = 2
+        ring.fillColor = SKColor(white: 1, alpha: 0.04)
+        controlLayer.addChild(ring)
+
+        if mode.showsStick {
+            let thumb = SKShapeNode(circleOfRadius: controlRadius * 0.34)
+            thumb.position = stickCenter
+            thumb.strokeColor = SKColor(white: 1, alpha: 0.7)
+            thumb.lineWidth = 2
+            thumb.fillColor = SKColor(white: 1, alpha: 0.12)
+            controlLayer.addChild(thumb)
+            stickThumb = thumb
+        } else {
+            for (name, angle) in [("right", CGFloat(0)), ("up", CGFloat.pi / 2),
+                                  ("left", CGFloat.pi), ("down", -CGFloat.pi / 2)] {
+                let path = CGMutablePath()
+                let inner = controlDeadzone + 8
+                let outer = controlRadius - 12
+                path.move(to: CGPoint(x: cos(angle - 0.55) * inner, y: sin(angle - 0.55) * inner))
+                path.addLine(to: CGPoint(x: cos(angle - 0.55) * outer, y: sin(angle - 0.55) * outer))
+                path.addLine(to: CGPoint(x: cos(angle + 0.55) * outer, y: sin(angle + 0.55) * outer))
+                path.addLine(to: CGPoint(x: cos(angle + 0.55) * inner, y: sin(angle + 0.55) * inner))
+                path.closeSubpath()
+                let wedge = SKShapeNode(path: path)
+                wedge.position = stickCenter
+                wedge.strokeColor = SKColor(white: 1, alpha: 0.55)
+                wedge.lineWidth = 2
+                wedge.fillColor = SKColor(white: 1, alpha: 0.05)
+                controlLayer.addChild(wedge)
+                dpadWedges[name] = wedge
+            }
+        }
+
+        let fire = SKShapeNode(circleOfRadius: controlRadius * 0.72)
+        fire.position = fireCenter
+        fire.strokeColor = SKColor(white: 1, alpha: 0.55)
+        fire.lineWidth = 2
+        fire.fillColor = SKColor(white: 1, alpha: 0.05)
+        controlLayer.addChild(fire)
+        let glyph = CGMutablePath()
+        glyph.move(to: CGPoint(x: 0, y: 26))
+        glyph.addLine(to: CGPoint(x: -20, y: -26))
+        glyph.addLine(to: CGPoint(x: 20, y: -26))
+        glyph.closeSubpath()
+        let ship = SKShapeNode(path: glyph)
+        ship.position = fireCenter
+        ship.strokeColor = SKColor(white: 1, alpha: 0.7)
+        ship.lineWidth = 2
+        controlLayer.addChild(ship)
+    }
+
+    private func showControlModeLabel(_ text: String) {
+        modeLabel?.removeFromParent()
+        let label = SKLabelNode(fontNamed: "Helvetica")
+        label.text = "CONTROLS \(text) · C TO CHANGE"
+        label.fontSize = 28
+        label.fontColor = SKColor(white: 1, alpha: 0.6)
+        label.position = CGPoint(x: size.width / 2, y: 60)
+        label.zPosition = 901
+        addChild(label)
+        modeLabel = label
+        label.run(SKAction.sequence([
+            SKAction.wait(forDuration: 2.2),
+            SKAction.fadeOut(withDuration: 0.6),
+            SKAction.removeFromParent()
+        ]))
+    }
+
+    private func applyStick(_ p: CGPoint) {
+        let dx = p.x - stickCenter.x
+        let dy = p.y - stickCenter.y
+        keyboardLeft = dx < -controlDeadzone
+        keyboardRight = dx > controlDeadzone
+        handleRotation()
+        if dy > controlDeadzone {
+            thrustDirection = 1.0
+            stickThrusting = true
+        } else if dy < -controlDeadzone {
+            thrustDirection = -1.0
+            stickThrusting = true
+        } else if stickThrusting {
+            thrustDirection = 0
+            stickThrusting = false
+        }
+        if let thumb = stickThumb {
+            let mag = hypot(Double(dx), Double(dy))
+            let lim = Double(controlRadius * 0.6)
+            let k = mag > lim && mag > 0 ? lim / mag : 1
+            thumb.position = CGPoint(x: stickCenter.x + dx * CGFloat(k),
+                                     y: stickCenter.y + dy * CGFloat(k))
+        }
+    }
+
+    private func releaseStick() {
+        stickFinger = nil
+        keyboardLeft = false
+        keyboardRight = false
+        handleRotation()
+        if stickThrusting {
+            thrustDirection = 0
+            stickThrusting = false
+        }
+        stickThumb?.position = stickCenter
+    }
+
+    func controlTouchBegan(finger: Int, at p: CGPoint) {
+        let mode = AZControlMode.current
+        if mode.isHidden {
+            if !UserDefaults.standard.bool(forKey: AZControlMode.chosenKey) {
+                AZControlMode.set(.stickRight)
+                buildTouchControls()
+            }
+            return
+        }
+        if isGameOver {
+            if hypot(Double(p.x - fireCenter.x), Double(p.y - fireCenter.y)) <= Double(controlRadius) {
+                titleScreen?.removeFromParent()
+                restartGame()
+            }
+            return
+        }
+        if hypot(Double(p.x - stickCenter.x), Double(p.y - stickCenter.y)) <= Double(controlRadius) {
+            stickFinger = finger
+            applyStick(p)
+            return
+        }
+        if hypot(Double(p.x - fireCenter.x), Double(p.y - fireCenter.y)) <= Double(controlRadius) {
+            fireBullet()
+            return
+        }
+        if let label = modeLabel, label.parent != nil,
+           abs(p.x - label.position.x) < 320, abs(p.y - label.position.y) < 50 {
+            AZControlMode.advance()
+            buildTouchControls()
+        }
+    }
+
+    func controlTouchMoved(finger: Int, at p: CGPoint) {
+        if finger == stickFinger { applyStick(p) }
+    }
+
+    func controlTouchEnded(finger: Int, at p: CGPoint) {
+        if finger == stickFinger { releaseStick() }
+    }
+
+    #if !os(macOS)
+    override func touchBegan(finger: Int, at p: CGPoint) { controlTouchBegan(finger: finger, at: p) }
+    override func touchMoved(finger: Int, at p: CGPoint) { controlTouchMoved(finger: finger, at: p) }
+    override func touchEnded(finger: Int, at p: CGPoint) { controlTouchEnded(finger: finger, at: p) }
+    #endif
+}
+
+// MARK: - On-screen control mode (hidden by default on desktop; first touch
+// enables the stick on mobile; cycle with the C key or by tapping the label)
+enum AZControlMode: Int, CaseIterable {
+    case hidden, stickLeft, stickRight, dpadLeft, dpadRight
+
+    static let storageKey = "AsteroidZ.controlMode"
+    static let chosenKey = "AsteroidZ.controlModeChosen"
+
+    static var current: AZControlMode {
+        AZControlMode(rawValue: UserDefaults.standard.integer(forKey: storageKey)) ?? .hidden
+    }
+    static func advance() {
+        set(AZControlMode(rawValue: (current.rawValue + 1) % allCases.count) ?? .hidden)
+    }
+    static func set(_ mode: AZControlMode) {
+        UserDefaults.standard.set(mode.rawValue, forKey: storageKey)
+        UserDefaults.standard.set(true, forKey: chosenKey)
+    }
+
+    var showsStick: Bool { self == .stickLeft || self == .stickRight }
+    var showsDpad: Bool { self == .dpadLeft || self == .dpadRight }
+    var isHidden: Bool { self == .hidden }
+    var showsControl: Bool { showsStick || showsDpad }
+    var onLeft: Bool { self == .stickLeft || self == .dpadLeft }   // fire sits opposite
+
+    var label: String {
+        switch self {
+        case .hidden:     return "HIDDEN"
+        case .stickLeft:  return "STICK LEFT"
+        case .stickRight: return "STICK RIGHT"
+        case .dpadLeft:   return "DPAD LEFT"
+        case .dpadRight:  return "DPAD RIGHT"
+        }
     }
 }
