@@ -26,7 +26,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var stickFinger: Int? = nil
     private var stickRotating = 0
     private var stickThrusting = false
-    private var modeLabel: SKLabelNode?
+    private var modeLabel: SKNode?
     // Asteroid sizes keyed by node identity (Apple's userData is Any-typed,
     // which Embedded Swift forbids; a typed side table works on every platform)
     private var asteroidSizes: [ObjectIdentifier: AsteroidSize] = [:]
@@ -919,6 +919,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         controlsButton?.isHidden = !isGameOver
         startButton?.isHidden = !isGameOver
+        modeLabel?.isHidden = titleScreen?.parent == nil
 
         // Handle thrust flames
         if thrustDirection > 0 {
@@ -2849,14 +2850,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private func showControlModeLabel(_ text: String) {
         modeLabel?.removeFromParent()
-        let label = SKLabelNode(fontNamed: "Helvetica")
-        label.text = "GAME DESIGN BY TODD BRUSS"
-        label.fontSize = 28
-        label.fontColor = SKColor(white: 1, alpha: 0.85)
-        label.position = CGPoint(x: size.width / 2, y: 60)
-        label.zPosition = 901
-        addChild(label)
-        modeLabel = label
+        let credit = SKNode()
+        let letters = drawVectorLetter("GAME DESIGN BY TODD BRUSS", at: .zero)
+        credit.addChild(letters)
+        let bounds = letters.calculateAccumulatedFrame()
+        letters.position = CGPoint(x: -bounds.midX, y: -bounds.midY)
+        credit.position = CGPoint(x: size.width / 2, y: 60)
+        credit.zPosition = 901
+        credit.alpha = 0.85
+        // billboard spin: a sign rotating about its vertical axis
+        credit.run(SKAction.repeatForever(SKAction.sequence([
+            SKAction.scaleX(to: -1, duration: 1.4),
+            SKAction.scaleX(to: 1, duration: 1.4)
+        ])))
+        addChild(credit)
+        modeLabel = credit
     }
 
     private func applyStick(_ p: CGPoint) {
