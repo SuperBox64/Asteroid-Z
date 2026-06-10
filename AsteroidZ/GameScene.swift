@@ -110,6 +110,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     private var activeSaucer: SKShapeNode?
+    private var saucerLeaving = false
     private var saucerSound: SKAudioNode?
     private var saucerTimer: Timer?
     
@@ -573,6 +574,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             
             // Check if position is safe
             var positionIsSafe = true
+            for other in asteroids {
+                let d = hypot(testPosition.x - other.position.x, testPosition.y - other.position.y)
+                if d < 220 {
+                    positionIsSafe = false
+                    break
+                }
+            }
             
             // Ensure asteroids are away from the player
             if let player = player {
@@ -639,7 +647,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             asteroid.fillColor = .black     // TEMP: Color Asters red (was .black)
             asteroid.physicsBody = SKPhysicsBody(polygonFrom: asteroidPath)
             asteroid.physicsBody?.categoryBitMask = asterCategory
-            asteroid.physicsBody?.contactTestBitMask = shipCategory
+            asteroid.physicsBody?.contactTestBitMask = shipCategory | asterCategory
             asteroid.physicsBody?.collisionBitMask = asterCategory
             asteroid.physicsBody?.restitution = 0.8  // Reduced from 1.0
             asteroid.physicsBody?.friction = 0.2     // Added friction
@@ -654,7 +662,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             asteroid.fillColor = .clear   // TEMP: Color Roids green (was .clear)
             asteroid.physicsBody = SKPhysicsBody(polygonFrom: asteroidPath)
             asteroid.physicsBody?.categoryBitMask = roidCategory
-            asteroid.physicsBody?.contactTestBitMask = shipCategory
+            asteroid.physicsBody?.contactTestBitMask = shipCategory | roidCategory
             asteroid.physicsBody?.collisionBitMask = 0
             asteroid.name = "Roid"
         }
@@ -906,9 +914,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
         
-        // Wrap saucer position
+        // Wrap saucer position; a leaving saucer stops wrapping and exits
         if let saucer = activeSaucer {
-            wrapSaucer(saucer)
+            if saucerLeaving {
+                if saucer.position.x < frame.minX - 150 || saucer.position.x > frame.maxX + 150 ||
+                   saucer.position.y < frame.minY - 150 || saucer.position.y > frame.maxY + 150 {
+                    removeSaucer()
+                }
+            } else {
+                wrapSaucer(saucer)
+            }
         }
         
         // Update beat tempo every frame to catch all asteroid count changes
@@ -947,7 +962,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     // Add these new methods for asteroid splitting
     func splitAsteroid(_ asteroid: SKShapeNode, awardPoints: Bool = true) {
-        if let size = asteroidSizes[ObjectIdentifier(asteroid)] {
+        if let size = asteroidSizes.removeValue(forKey: ObjectIdentifier(asteroid)) {
             switch size {
             case .large:
                 run(bangLargeSound)
@@ -1017,7 +1032,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             if isNextAster {
                 // Black filled asteroids that collide with each other
                 newAsteroid.physicsBody?.categoryBitMask = asterCategory
-                newAsteroid.physicsBody?.contactTestBitMask = shipCategory
+                newAsteroid.physicsBody?.contactTestBitMask = shipCategory | asterCategory
                 newAsteroid.physicsBody?.collisionBitMask = asterCategory
                 newAsteroid.physicsBody?.restitution = 0.8  // Reduced from 1.0
                 newAsteroid.physicsBody?.friction = 0.2     // Added friction
@@ -1039,7 +1054,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             } else {
                 // Clear filled asteroids that pass through each other
                 newAsteroid.physicsBody?.categoryBitMask = roidCategory
-                newAsteroid.physicsBody?.contactTestBitMask = shipCategory
+                newAsteroid.physicsBody?.contactTestBitMask = shipCategory | roidCategory
                 newAsteroid.physicsBody?.collisionBitMask = 0
                 
                 // Ensure Roids keep moving with constant velocity
@@ -1291,6 +1306,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
 
+        // Same-type asteroids break each other up, like bullet hits
+        if collision == asterCategory || collision == roidCategory {
+            if let a = contact.bodyA.node as? SKShapeNode,
+               asteroidSizes[ObjectIdentifier(a)] != nil {
+                splitAsteroid(a, awardPoints: false)
+            }
+            if let b = contact.bodyB.node as? SKShapeNode,
+               asteroidSizes[ObjectIdentifier(b)] != nil {
+                splitAsteroid(b, awardPoints: false)
+            }
+        }
+
         // Saucer bullets break asteroids too (original arcade behavior),
         // with no points awarded to the player
         if collision == (saucerBulletCategory | asterCategory) ||
@@ -1526,10 +1553,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         activeSaucer = saucer
         addChild(saucer)
         
-        // Remove after 15 seconds with proper cleanup
-        run(SKAction.sequence([SKAction.wait(forDuration: 15), SKAction.run {
+        // After 15 seconds the saucer LEAVES: the timer rides the saucer node
+        // (a destroyed saucer cancels it, so no stale timer can pop the next
+        // one), wrapping stops, and it flies off the edge under its own speed
+        saucer.run(SKAction.sequence([SKAction.wait(forDuration: 15), SKAction.run {
             if self.activeSaucer != nil {
-                self.removeSaucer()
+                self.saucerLeaving = true
             }
         }]))
         
@@ -1608,12 +1637,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         saucerShootTimer?.invalidate()
         saucerShootTimer = nil
         
-        if let saucer = activeSaucer {
-            saucerDestroyed(saucer)  // Use new destruction effect
-        }
+        // Quiet exit - saucers only explode when something actually hits them
+        activeSaucer?.removeFromParent()
+        activeSaucer = nil
+        saucerLeaving = false
     }
     
     func saucerDestroyed(_ saucer: SKShapeNode) {
+        saucerLeaving = false
         // Stop sound first
         saucerSound?.removeFromParent()
         saucerSound = nil
