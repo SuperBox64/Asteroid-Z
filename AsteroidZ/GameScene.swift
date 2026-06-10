@@ -102,7 +102,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var lastExtraShipScore = 0  // Track when we last gave an extra ship
         
     // Add at top of class
-    private let maxAsterVelocity: CGFloat = 300.0  // Maximum speed for Aster type asteroids
+    private let maxAsterVelocity: CGFloat = 450.0  // Maximum speed for Aster type asteroids
     
     enum SaucerSize {
         case large
@@ -127,7 +127,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     // At top of class
     private var shipThrustSpeed: CGFloat = 15.0  // Reduced by 90% from 150 to 15
-    private let minAsteroidSpeed: CGFloat = 60.0
+    private let minAsteroidSpeed: CGFloat = 90.0
     
     // Audio properties
     private var beat1: SKAction!
@@ -1056,7 +1056,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 newAsteroid.physicsBody?.allowsRotation = true
                 
                 // Slower initial speed for colliding asteroids
-                let speed = max(CGFloat.random(in: 100...200), parentSpeed * 1.3)
+                let speed = max(CGFloat.random(in: 150...300), parentSpeed * 1.3)
                 let splitAngle = splitAngles[i] + CGFloat.random(in: -0.5...0.5)
                 let velocity = CGVector(dx: cos(splitAngle) * speed, dy: sin(splitAngle) * speed)
                 newAsteroid.physicsBody?.velocity = velocity
@@ -1072,7 +1072,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 newAsteroid.physicsBody?.collisionBitMask = roidCategory
                 
                 // Ensure Roids keep moving with constant velocity
-                let speed = max(CGFloat.random(in: 100...200), parentSpeed * 1.3)
+                let speed = max(CGFloat.random(in: 150...300), parentSpeed * 1.3)
                 let splitAngle = splitAngles[i] + CGFloat.random(in: -0.5...0.5)
                 let velocity = CGVector(dx: cos(splitAngle) * speed, dy: sin(splitAngle) * speed)
                 newAsteroid.physicsBody?.velocity = velocity
@@ -1682,7 +1682,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             
             // Random direction and speed
             let angle = CGFloat.random(in: 0...(2 * .pi))
-            let speed = CGFloat.random(in: 50...150)
+            let speed = CGFloat.random(in: 80...230)
             let dx = cos(angle) * speed
             let dy = sin(angle) * speed
             
@@ -1843,7 +1843,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             
             // Random direction explosion
             let angle = CGFloat.random(in: 0...(2 * .pi))
-            let speed = CGFloat.random(in: 50...100)
+            let speed = CGFloat.random(in: 80...160)
             let dx = cos(angle) * speed
             let dy = sin(angle) * speed
             
