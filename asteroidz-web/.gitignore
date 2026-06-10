@@ -3,3 +3,4 @@
 bundle.js
 web/manifest.json
 web/runtime.js
+web/index-named.html

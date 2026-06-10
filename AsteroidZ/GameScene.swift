@@ -2742,7 +2742,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         sLetters.position = CGPoint(x: -sBounds.midX, y: -sBounds.midY)
         let sw = sBounds.width + 52
         let sOutline = SKShapeNode(rect: CGRect(x: -sw / 2, y: -32, width: sw, height: 64))
-        sOutline.strokeColor = SKColor(white: 1, alpha: 0.8)
+        sOutline.strokeColor = .white
         sOutline.lineWidth = 2
         sOutline.fillColor = .clear
         sb.addChild(sOutline)
@@ -2765,7 +2765,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let w = bounds.width + pad * 2
         let h: CGFloat = 64
         let outline = SKShapeNode(rect: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
-        outline.strokeColor = SKColor(white: 1, alpha: 0.8)
+        outline.strokeColor = .white
         outline.lineWidth = 2
         outline.fillColor = .clear
         box.addChild(outline)
@@ -2851,17 +2851,23 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func showControlModeLabel(_ text: String) {
         modeLabel?.removeFromParent()
         let credit = SKNode()
-        let letters = drawVectorLetter("GAME DESIGN BY TODD BRUSS", at: .zero)
+        let letters = drawVectorLetter("DESIGN BY TODD BRUSS", at: .zero)
         credit.addChild(letters)
         let bounds = letters.calculateAccumulatedFrame()
         letters.position = CGPoint(x: -bounds.midX, y: -bounds.midY)
         credit.position = CGPoint(x: size.width / 2, y: 60)
         credit.zPosition = 901
         credit.alpha = 0.85
-        // billboard spin: a sign rotating about its vertical axis
+        // billboard spin: a sign rotating about its vertical axis, holding
+        // 3 seconds on the readable face, eased like a real sign motor
+        let away = SKAction.scaleX(to: -1, duration: 1.4)
+        away.timingMode = .easeInEaseOut
+        let back = SKAction.scaleX(to: 1, duration: 1.4)
+        back.timingMode = .easeInEaseOut
         credit.run(SKAction.repeatForever(SKAction.sequence([
-            SKAction.scaleX(to: -1, duration: 1.4),
-            SKAction.scaleX(to: 1, duration: 1.4)
+            SKAction.wait(forDuration: 3.0),
+            away,
+            back
         ])))
         addChild(credit)
         modeLabel = credit

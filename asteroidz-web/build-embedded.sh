@@ -79,6 +79,7 @@ wasm-opt -Oz --enable-bulk-memory --enable-nontrapping-float-to-int --enable-sig
 # Publish next to the normal web payload so CI (and the website deploy) can grab it.
 OUT="$ROOT/asteroidz-web/web/asteroidz-embedded.wasm"
 cp "$B/bossman-embedded-oz.wasm" "$OUT"
+cp "$B/bossman-embedded.wasm" "$ROOT/asteroidz-web/web/asteroidz-embedded-named.wasm"
 
 raw=$(stat -f%z "$OUT"); gz=$(gzip -c -9 "$OUT" | wc -c | tr -d ' ')
 echo
