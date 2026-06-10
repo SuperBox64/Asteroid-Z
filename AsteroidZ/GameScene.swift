@@ -344,7 +344,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         visualPath.addLine(to: CGPoint(x: 15 * scale, y: -20 * scale))
         
         let saucer = SKShapeNode(path: visualPath)  // Use detailed path for visuals
-        saucer.strokeColor = .white
+        saucer.strokeColor = SKColor(white: 1, alpha: 0.7)
         saucer.lineWidth = 2.0
         
         // Use simpler path for physics body
@@ -664,7 +664,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func createAsteroid(size: AsteroidSize) -> SKShapeNode {
         let asteroidPath = createAsteroidPath(radius: size.radius, points: size.points)
         let asteroid = SKShapeNode(path: asteroidPath)
-        asteroid.strokeColor = .white
+        asteroid.strokeColor = SKColor(white: 1, alpha: 0.7)
         asteroid.lineWidth = 2.0
         
         asteroidSizes[ObjectIdentifier(asteroid)] = size
@@ -1051,7 +1051,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         for i in 0..<count {
             let newAsteroid = SKShapeNode(path: createAsteroidPath(radius: size.radius, points: size.points))
-            newAsteroid.strokeColor = .white
+            newAsteroid.strokeColor = SKColor(white: 1, alpha: 0.7)
             newAsteroid.lineWidth = 2.0
             
             // Offset starting positions to prevent overlap
@@ -1173,7 +1173,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         // Set line properties
         [topLine, leftLine, rightLine].forEach {
-            $0.strokeColor = .white
+            $0.strokeColor = SKColor(white: 1, alpha: 0.7)
             $0.lineWidth = 2.0
             
             if let player {
@@ -1748,7 +1748,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             path.addLine(to: CGPoint(x: startX + pieceLength, y: startY + CGFloat.random(in: -5...5)))
             
             line.path = path
-            line.strokeColor = .white
+            line.strokeColor = SKColor(white: 1, alpha: 0.7)
             line.lineWidth = 1.0
             line.position = position
             
@@ -1863,7 +1863,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         for _ in 0...5 {
             let particle = SKShapeNode(circleOfRadius: 1.0)
             particle.position = position
-            particle.strokeColor = .white
+            particle.strokeColor = SKColor(white: 1, alpha: 0.7)
             particle.fillColor = .white
             addChild(particle)
             
@@ -1928,7 +1928,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         for _ in 0...particleCount {
             let particle = SKShapeNode(circleOfRadius: particleRadius)
             particle.position = position
-            particle.strokeColor = .white
+            particle.strokeColor = SKColor(white: 1, alpha: 0.7)
             particle.fillColor = .white
             addChild(particle)
             
@@ -1957,7 +1957,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 x: position.x + CGFloat.random(in: -40...40),
                 y: position.y + CGFloat.random(in: -40...40)
             )
-            particle.strokeColor = .white
+            particle.strokeColor = SKColor(white: 1, alpha: 0.7)
             particle.fillColor = .white
             addChild(particle)
             
@@ -1999,7 +1999,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         path.closeSubpath()
         
         let shipShape = SKShapeNode(path: path)
-        shipShape.strokeColor = .white
+        shipShape.strokeColor = SKColor(white: 1, alpha: 0.7)
         shipShape.lineWidth = 2.0
         shipShape.position = pos
         return shipShape
