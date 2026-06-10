@@ -325,7 +325,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         saucer.physicsBody = SKPhysicsBody(polygonFrom: path)
         saucer.physicsBody?.categoryBitMask = saucerCategory
         saucer.physicsBody?.collisionBitMask = asterCategory  // Add collision with Aster type
-        saucer.physicsBody?.contactTestBitMask = bulletCategory | asterCategory  // Test contact with bullets and Asters
+        saucer.physicsBody?.contactTestBitMask = bulletCategory | asterCategory | roidCategory  // Bullets and every asteroid type
         saucer.physicsBody?.affectedByGravity = false
         saucer.physicsBody?.linearDamping = 0
         saucer.physicsBody?.angularDamping = 0
@@ -946,24 +946,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     // Add these new methods for asteroid splitting
-    func splitAsteroid(_ asteroid: SKShapeNode) {
+    func splitAsteroid(_ asteroid: SKShapeNode, awardPoints: Bool = true) {
         if let size = asteroidSizes[ObjectIdentifier(asteroid)] {
             switch size {
             case .large:
                 run(bangLargeSound)
-                score += 5
+                if awardPoints { if awardPoints { score += 5 } }
                 createAsteroidImplosion(at: asteroid.position)  // Only implosion for large
                 showMessage("5", duration: 1.0)
             case .medium:
                 run(bangMediumSound)
-                score += 10
+                if awardPoints { score += 10 }
                 // Both effects for medium
                 createAsteroidImplosion(at: asteroid.position)
                 createAsteroidExplosion(at: asteroid.position, isMedium: true)
                 showMessage("10", duration: 1.0)
             case .small:
                 run(bangSmallSound)
-                score += 25
+                if awardPoints { score += 25 }
                 createAsteroidExplosion(at: asteroid.position, isMedium: false)
                 showMessage("25", duration: 1.0)
             }
@@ -1244,8 +1244,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Log collision details
         print("Collision detected between: \(contact.bodyA.node?.name ?? "Unknown") and \(contact.bodyB.node?.name ?? "Unknown")")
         
-        // Add handling for Aster hitting saucer
-        if collision == (asterCategory | saucerCategory) {
+        // Any asteroid hitting the saucer destroys it (as in the original arcade)
+        if collision == (asterCategory | saucerCategory) || collision == (roidCategory | saucerCategory) {
             // Get the saucer node
             let saucer = (contact.bodyA.categoryBitMask == saucerCategory) ? 
                          contact.bodyA.node as? SKShapeNode : 
@@ -1289,6 +1289,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             if !isRespawning && !isGameOver && player?.isHidden == false {
                 playerDied()
             }
+        }
+
+        // Saucer bullets break asteroids too (original arcade behavior),
+        // with no points awarded to the player
+        if collision == (saucerBulletCategory | asterCategory) ||
+           collision == (saucerBulletCategory | roidCategory) {
+            let bullet = contact.bodyA.categoryBitMask == saucerBulletCategory ? contact.bodyA.node : contact.bodyB.node
+            let target = contact.bodyA.categoryBitMask == saucerBulletCategory ? contact.bodyB.node : contact.bodyA.node
+            if let targetNode = target as? SKShapeNode,
+               asteroidSizes[ObjectIdentifier(targetNode)] != nil {
+                splitAsteroid(targetNode, awardPoints: false)
+            }
+            bullet?.removeFromParent()
         }
 
         // Add check for player bullets hitting saucer bullets
