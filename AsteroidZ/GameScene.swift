@@ -263,6 +263,29 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     // Add at top of class
+    // The hero ship is BUILT FROM three separate vector lines at 0.7 alpha,
+    // each inset from the corners so the gaps read on screen. The parent
+    // shape stays invisible and carries the closed triangle physics only.
+    private func attachShipLines(to node: SKShapeNode) {
+        let pts = [CGPoint(x: 0, y: 20), CGPoint(x: -15, y: -20), CGPoint(x: 15, y: -20)]
+        for i in 0..<3 {
+            let a = pts[i]
+            let b = pts[(i + 1) % 3]
+            let inset: CGFloat = 0.08
+            let ax = a.x + (b.x - a.x) * inset
+            let ay = a.y + (b.y - a.y) * inset
+            let bx = b.x - (b.x - a.x) * inset
+            let by = b.y - (b.y - a.y) * inset
+            let line = CGMutablePath()
+            line.move(to: CGPoint(x: ax, y: ay))
+            line.addLine(to: CGPoint(x: bx, y: by))
+            let seg = SKShapeNode(path: line)
+            seg.strokeColor = SKColor(white: 1, alpha: 0.7)
+            seg.lineWidth = 2.0
+            node.addChild(seg)
+        }
+    }
+
     private func createPlayerShip() -> SKShapeNode {
         let path = CGMutablePath()
         path.move(to: CGPoint(x: 0, y: 20))    // Top point
@@ -270,18 +293,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         path.addLine(to: CGPoint(x: 15, y: -20))  // Bottom right
         path.closeSubpath()
         
-        let shipLines = CGMutablePath()
-        shipLines.move(to: CGPoint(x: 0, y: 20))
-        shipLines.addLine(to: CGPoint(x: -15, y: -20))
-        shipLines.move(to: CGPoint(x: -15, y: -20))
-        shipLines.addLine(to: CGPoint(x: 15, y: -20))
-        shipLines.move(to: CGPoint(x: 15, y: -20))
-        shipLines.addLine(to: CGPoint(x: 0, y: 20))
-
-        let ship = SKShapeNode(path: shipLines)
-        ship.strokeColor = SKColor(white: 1, alpha: 0.7)
-        ship.lineWidth = 2.0
+        let ship = SKShapeNode(path: path)
+        ship.strokeColor = .clear
+        ship.lineWidth = 0
         ship.fillColor = .clear
+        attachShipLines(to: ship)
         
         // Setup physics body
         ship.physicsBody = SKPhysicsBody(polygonFrom: path)
@@ -360,18 +376,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         path.addLine(to: CGPoint(x: 15, y: -20))  // Bottom right
         path.closeSubpath()
         
-        let shipLines = CGMutablePath()
-        shipLines.move(to: CGPoint(x: 0, y: 20))
-        shipLines.addLine(to: CGPoint(x: -15, y: -20))
-        shipLines.move(to: CGPoint(x: -15, y: -20))
-        shipLines.addLine(to: CGPoint(x: 15, y: -20))
-        shipLines.move(to: CGPoint(x: 15, y: -20))
-        shipLines.addLine(to: CGPoint(x: 0, y: 20))
-
-        player = SKShapeNode(path: shipLines)
-        player.strokeColor = SKColor(white: 1, alpha: 0.7)
-        player.lineWidth = 2.0
+        player = SKShapeNode(path: path)
+        player.strokeColor = .clear
+        player.lineWidth = 0
         player.fillColor = .clear
+        attachShipLines(to: player)
         
         // Update physics body settings for player
         player.physicsBody = SKPhysicsBody(polygonFrom: path)
