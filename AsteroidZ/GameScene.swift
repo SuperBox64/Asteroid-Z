@@ -127,6 +127,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     // At top of class
     private var shipThrustSpeed: CGFloat = 15.0  // Reduced by 90% from 150 to 15
+    private let minAsteroidSpeed: CGFloat = 60.0
     
     // Audio properties
     private var beat1: SKAction!
@@ -663,7 +664,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             asteroid.physicsBody = SKPhysicsBody(polygonFrom: asteroidPath)
             asteroid.physicsBody?.categoryBitMask = roidCategory
             asteroid.physicsBody?.contactTestBitMask = shipCategory | roidCategory
-            asteroid.physicsBody?.collisionBitMask = 0
+            asteroid.physicsBody?.collisionBitMask = roidCategory
             asteroid.name = "Roid"
         }
         
@@ -884,17 +885,25 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             wrapAsteroid(asteroid)
         }
         
-        // Cap velocity for Aster type asteroids
+        // Keep every asteroid inside its speed band: cap the fast ones and
+        // push the slow ones back up - an asteroid must NEVER stop
         for asteroid in asteroids {
-            if asteroid.fillColor == .black {  // It's an Aster type
-                if let physicsBody = asteroid.physicsBody {
-                    let velocity = physicsBody.velocity
-                    let speed = sqrt(velocity.dx * velocity.dx + velocity.dy * velocity.dy)
-                    
-                    if speed > maxAsterVelocity {
-                        // Scale down the velocity to max speed while preserving direction
-                        let scale = maxAsterVelocity / speed
-                        physicsBody.velocity = CGVector(dx: velocity.dx * scale, 
+            if let physicsBody = asteroid.physicsBody {
+                let velocity = physicsBody.velocity
+                let speed = sqrt(velocity.dx * velocity.dx + velocity.dy * velocity.dy)
+                
+                if speed > maxAsterVelocity {
+                    let scale = maxAsterVelocity / speed
+                    physicsBody.velocity = CGVector(dx: velocity.dx * scale,
+                                                  dy: velocity.dy * scale)
+                } else if speed < minAsteroidSpeed {
+                    if speed < 1 {
+                        let angle = CGFloat.random(in: 0...(2 * .pi))
+                        physicsBody.velocity = CGVector(dx: cos(angle) * minAsteroidSpeed,
+                                                      dy: sin(angle) * minAsteroidSpeed)
+                    } else {
+                        let scale = minAsteroidSpeed / speed
+                        physicsBody.velocity = CGVector(dx: velocity.dx * scale,
                                                       dy: velocity.dy * scale)
                     }
                 }
@@ -1055,7 +1064,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 // Clear filled asteroids that pass through each other
                 newAsteroid.physicsBody?.categoryBitMask = roidCategory
                 newAsteroid.physicsBody?.contactTestBitMask = shipCategory | roidCategory
-                newAsteroid.physicsBody?.collisionBitMask = 0
+                newAsteroid.physicsBody?.collisionBitMask = roidCategory
                 
                 // Ensure Roids keep moving with constant velocity
                 let speed = CGFloat.random(in: 100...200)
@@ -1306,15 +1315,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
 
-        // Same-type asteroids break each other up, like bullet hits
+        // Same-type asteroids bounce off each other and the collision adds
+        // energy: both leave faster, in the directions the bounce gave them
         if collision == asterCategory || collision == roidCategory {
-            if let a = contact.bodyA.node as? SKShapeNode,
-               asteroidSizes[ObjectIdentifier(a)] != nil {
-                splitAsteroid(a, awardPoints: false)
-            }
-            if let b = contact.bodyB.node as? SKShapeNode,
-               asteroidSizes[ObjectIdentifier(b)] != nil {
-                splitAsteroid(b, awardPoints: false)
+            for body in [contact.bodyA, contact.bodyB] {
+                let v = body.velocity
+                body.velocity = CGVector(dx: v.dx * 1.15, dy: v.dy * 1.15)
             }
         }
 
