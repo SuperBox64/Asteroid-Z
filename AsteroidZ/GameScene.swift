@@ -2731,11 +2731,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         buildTouchControls()
     }
 
+    private func styleVectorBeams(_ root: SKNode) {
+        if let shape = root as? SKShapeNode {
+            shape.strokeColor = SKColor(white: 1, alpha: 0.85)
+            shape.lineWidth = 1
+        }
+        for c in root.children { styleVectorBeams(c) }
+    }
+
     func buildControlsButton() {
         startButton?.removeFromParent()
         let sb = SKNode()
         sb.zPosition = 902
-        sb.alpha = 0.85
         let sLetters = drawVectorLetter("START", at: .zero)
         sb.addChild(sLetters)
         let sBounds = sLetters.calculateAccumulatedFrame()
@@ -2747,6 +2754,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         sOutline.fillColor = .clear
         sb.addChild(sOutline)
         sb.position = CGPoint(x: size.width / 2, y: 250)
+        styleVectorBeams(sb)
         addChild(sb)
         startButton = sb
         startButtonRect = CGRect(x: sb.position.x - sw / 2, y: sb.position.y - 32, width: sw, height: 64)
@@ -2755,7 +2763,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         controlsButton?.removeFromParent()
         let box = SKNode()
         box.zPosition = 902
-        box.alpha = 0.85
         let text = "CONTROLS \(AZControlMode.current.label)"
         let letters = drawVectorLetter(text, at: .zero)
         box.addChild(letters)
@@ -2770,6 +2777,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         outline.fillColor = .clear
         box.addChild(outline)
         box.position = CGPoint(x: size.width / 2, y: 150)
+        styleVectorBeams(box)
         addChild(box)
         controlsButton = box
         controlsButtonRect = CGRect(x: box.position.x - w / 2, y: box.position.y - h / 2,
@@ -2857,7 +2865,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         letters.position = CGPoint(x: -bounds.midX, y: -bounds.midY)
         credit.position = CGPoint(x: size.width / 2, y: 60)
         credit.zPosition = 901
-        credit.alpha = 0.85
+        styleVectorBeams(credit)
         // billboard spin: a sign rotating about its vertical axis, holding
         // 3 seconds on the readable face, eased like a real sign motor
         let away = SKAction.scaleX(to: -1, duration: 1.4)
@@ -2865,7 +2873,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let back = SKAction.scaleX(to: 1, duration: 1.4)
         back.timingMode = .easeInEaseOut
         credit.run(SKAction.repeatForever(SKAction.sequence([
-            SKAction.wait(forDuration: 3.0),
+            SKAction.wait(forDuration: 1.5),
             away,
             back
         ])))
