@@ -103,7 +103,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private var lastExtraShipScore = 0  // Track when we last gave an extra ship
         
     // Add at top of class
-    private let maxAsterVelocity: CGFloat = 450.0  // Maximum speed for Aster type asteroids
+    private let maxAsterVelocity: CGFloat = 675.0  // Maximum speed for Aster type asteroids
     
     enum SaucerSize {
         case large
@@ -128,7 +128,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     // At top of class
     private var shipThrustSpeed: CGFloat = 15.0  // Reduced by 90% from 150 to 15
-    private let minAsteroidSpeed: CGFloat = 90.0
+    private let minAsteroidSpeed: CGFloat = 135.0
     
     // Audio properties
     private var beat1: SKAction!
@@ -1075,7 +1075,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func spawnSplitAsteroids(at position: CGPoint, size: AsteroidSize, count: Int,
                              parentSpeed: CGFloat = 0) {
-        let speedBand: ClosedRange<CGFloat> = size == .medium ? 170...340 : 225...450
+        let speedBand: ClosedRange<CGFloat> = size == .medium ? 255...510 : 338...675
         let splitAngles: [CGFloat] = [0, .pi] // Opposite directions
         
         for i in 0..<count {
@@ -1744,7 +1744,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             
             // Random direction and speed
             let angle = CGFloat.random(in: 0...(2 * .pi))
-            let speed = CGFloat.random(in: 132...352)
+            let speed = CGFloat.random(in: 198...528)
             let dx = cos(angle) * speed
             let dy = sin(angle) * speed
             
