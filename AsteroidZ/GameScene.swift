@@ -2164,7 +2164,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         for (path, position) in insertLetters {
             let letter = SKShapeNode(path: path)
-            letter.strokeColor = .white
+            letter.strokeColor = SKColor(white: 1, alpha: 0.8)
             letter.lineWidth = 2.0
             letter.position = position
             letter.setScale(0.5)  // 50% size
@@ -2179,7 +2179,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let glow = SKAction.sequence([
             SKAction.customAction(withDuration: 4.0) { node, time in
                 let progress = time / 2.0
-                let alpha = 0.775 + sin(progress * .pi * 2) * 0.075  // Oscillates between 0.7 and 0.85
+                let alpha = 0.675 + sin(progress * .pi * 2) * 0.175  // Oscillates between 0.5 and 0.85
                 node.alpha = alpha
             }
         ])
@@ -2825,7 +2825,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private func styleVectorBeams(_ root: SKNode) {
         if let shape = root as? SKShapeNode {
-            shape.strokeColor = SKColor(white: 1, alpha: 0.85)
+            shape.strokeColor = SKColor(white: 1, alpha: 0.75)
             shape.lineWidth = 1
         }
         for c in root.children { styleVectorBeams(c) }
@@ -2847,6 +2847,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         sb.addChild(sOutline)
         sb.position = CGPoint(x: size.width / 2, y: 250)
         styleVectorBeams(sb)
+        sOutline.strokeColor = SKColor(white: 1, alpha: 0.6)
         addChild(sb)
         startButton = sb
         startButtonRect = CGRect(x: sb.position.x - sw / 2, y: sb.position.y - 32, width: sw, height: 64)
@@ -2870,6 +2871,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         box.addChild(outline)
         box.position = CGPoint(x: size.width / 2, y: 150)
         styleVectorBeams(box)
+        outline.strokeColor = SKColor(white: 1, alpha: 0.6)
         addChild(box)
         controlsButton = box
         controlsButtonRect = CGRect(x: box.position.x - w / 2, y: box.position.y - h / 2,
