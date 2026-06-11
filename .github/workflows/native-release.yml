@@ -12,13 +12,13 @@ jobs:
   macos:
     runs-on: macos-15
     env:
-      HAVE_CERT: ${{ secrets.MACOS_CERT_P12 != '' }}
+      HAVE_CERT: ${{ secrets.MACOS_CERT_P12_BASE64 != '' }}
       HAVE_NOTARY: ${{ secrets.NOTARY_KEY_ID != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: macOS26/superbox64-spritekit
+          repository: SuperBox64/superbox64-spritekit
           ref: embedded
           path: superbox64-spritekit-src
       - name: place framework as sibling
@@ -34,7 +34,7 @@ jobs:
       - name: import Developer ID certificate
         if: env.HAVE_CERT == 'true'
         run: |
-          echo "${{ secrets.MACOS_CERT_P12 }}" | base64 -d > /tmp/cert.p12
+          echo "${{ secrets.MACOS_CERT_P12_BASE64 }}" | base64 -d > /tmp/cert.p12
           security create-keychain -p ci ci.keychain
           security default-keychain -s ci.keychain
           security unlock-keychain -p ci ci.keychain
@@ -44,9 +44,9 @@ jobs:
           rm /tmp/cert.p12
       - name: build, bundle, SIGN
         if: env.HAVE_CERT == 'true'
-        env:
-          SIGN_ID: ${{ secrets.MACOS_SIGN_ID }}
         run: |
+          IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)"/\1/')
+          export SIGN_ID="$IDENTITY"
           ./../superbox64-spritekit/native/build-sdl3-static.sh 2>/dev/null || ../superbox64-spritekit/native/build-sdl3-static.sh
           native-direct/release/build-macos.sh
       - name: build unsigned (no cert secrets configured)
@@ -59,10 +59,10 @@ jobs:
       - name: NOTARIZE + staple
         if: env.HAVE_CERT == 'true' && env.HAVE_NOTARY == 'true'
         run: |
-          echo "${{ secrets.NOTARY_KEY_P8 }}" | base64 -d > /tmp/notary.p8
+          echo "${{ secrets.NOTARY_KEY_P8_BASE64 }}" | base64 -d > /tmp/notary.p8
           xcrun notarytool submit native-direct/release/out/AsteroidZ-macos.zip \
             --key /tmp/notary.p8 --key-id "${{ secrets.NOTARY_KEY_ID }}" \
-            --issuer "${{ secrets.NOTARY_ISSUER }}" --wait
+            --issuer "${{ secrets.NOTARY_ISSUER_ID }}" --wait
           xcrun stapler staple native-direct/release/out/AsteroidZ.app
           rm -f /tmp/notary.p8 native-direct/release/out/AsteroidZ-macos.zip
           ditto -c -k --keepParent native-direct/release/out/AsteroidZ.app native-direct/release/out/AsteroidZ-macos.zip
@@ -78,7 +78,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: macOS26/superbox64-spritekit
+          repository: SuperBox64/superbox64-spritekit
           ref: embedded
           path: ../superbox64-spritekit
       - name: toolchain
@@ -108,7 +108,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: macOS26/superbox64-spritekit
+          repository: SuperBox64/superbox64-spritekit
           ref: embedded
           path: ../superbox64-spritekit
       - uses: compnerd/gha-setup-swift@main
@@ -136,7 +136,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: macOS26/superbox64-spritekit
+          repository: SuperBox64/superbox64-spritekit
           ref: embedded
           path: ../superbox64-spritekit
       - name: toolchains
