@@ -10,6 +10,8 @@ echo "=== macOS (local: build, bundle, sign, notarize when NOTARY_PROFILE set) =
 ./build-macos.sh
 
 if [ "${1:-}" = "--remote" ]; then
+  echo "=== macOS signed+notarized via Boss-Man CI (the signing secrets live there) ==="
+  gh workflow run build-asteroidz-native-macos.yml -R macOS26/Boss-Man || true
   echo "=== linux / windows / android via GitHub Actions ==="
   gh workflow run native-release.yml
   sleep 5
