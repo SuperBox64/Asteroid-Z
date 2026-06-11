@@ -547,18 +547,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func createAsteroidPoints(radius: CGFloat, points: Int) -> [CGPoint] {
         let angleStep = (CGFloat.pi * 2) / CGFloat(points)
-        let totalPoints = points * 3
         var pts = [CGPoint]()
-        pts.reserveCapacity(totalPoints)
-        for i in 0..<totalPoints {
-            let baseAngle = angleStep * CGFloat(i) / 3.0
-            let radiusVariation: CGFloat
-            if i % 3 == 0 {
-                radiusVariation = CGFloat.random(in: 0.9...1.1)
-            } else {
-                radiusVariation = CGFloat.random(in: 0.7...1.2)
-            }
-            let currentRadius = radius * radiusVariation
+        pts.reserveCapacity(points)
+        for i in 0..<points {
+            let baseAngle = angleStep * CGFloat(i)
+            let currentRadius = radius * CGFloat.random(in: 0.8...1.15)
             pts.append(CGPoint(x: cos(baseAngle) * currentRadius,
                                y: sin(baseAngle) * currentRadius))
         }
@@ -583,12 +576,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         for i in 0..<pts.count {
             let a = pts[i]
             let b = pts[(i + 1) % pts.count]
-            let inset: CGFloat = 0.07
+            let overhang: CGFloat = -0.1
             let line = CGMutablePath()
-            line.move(to: CGPoint(x: a.x + (b.x - a.x) * inset, y: a.y + (b.y - a.y) * inset))
-            line.addLine(to: CGPoint(x: b.x - (b.x - a.x) * inset, y: b.y - (b.y - a.y) * inset))
+            line.move(to: CGPoint(x: a.x + (b.x - a.x) * overhang, y: a.y + (b.y - a.y) * overhang))
+            line.addLine(to: CGPoint(x: b.x - (b.x - a.x) * overhang, y: b.y - (b.y - a.y) * overhang))
             let seg = SKShapeNode(path: line)
-            seg.strokeColor = SKColor(white: 1, alpha: 0.7)
+            seg.strokeColor = SKColor(white: 1, alpha: 0.65)
             seg.lineWidth = 2.0
             node.addChild(seg)
         }
