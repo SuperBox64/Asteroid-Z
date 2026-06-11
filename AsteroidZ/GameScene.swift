@@ -590,7 +590,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             line.addLine(to: CGPoint(x: b.x - (b.x - a.x) * d, y: b.y - (b.y - a.y) * d))
             let seg = SKShapeNode(path: line)
             seg.strokeColor = SKColor(white: 1, alpha: 0.5)
-            seg.lineWidth = 1.0
+            seg.lineWidth = 2.0
             seg.blendMode = .add
             node.addChild(seg)
         }
