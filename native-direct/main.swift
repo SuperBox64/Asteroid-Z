@@ -6,7 +6,7 @@ import CSDL3
 @main
 enum Main {
     static func main() {
-        kitHostInit()
+        kitHostInit(appName: "AsteroidZ")
 
         let v = SKView()
         v.ignoresSiblingOrder = true
