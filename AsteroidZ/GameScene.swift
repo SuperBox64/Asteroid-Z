@@ -1387,7 +1387,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if collision == asterCategory || collision == roidCategory {
             for body in [contact.bodyA, contact.bodyB] {
                 let v = body.velocity
-                body.velocity = CGVector(dx: v.dx * 1.15, dy: v.dy * 1.15)
+                body.velocity = CGVector(dx: v.dx * 1.3, dy: v.dy * 1.3)
             }
         }
 
