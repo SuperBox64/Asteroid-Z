@@ -683,7 +683,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let asteroid = SKShapeNode(path: asteroidPath)
         asteroid.strokeColor = .clear
         asteroid.lineWidth = 0
-        let rockTrim: CGFloat = size == .medium ? 0 : (size == .small ? -0.25 : 0)
+        let rockTrim: CGFloat = size == .medium ? 0 : (size == .small ? 0.1 : 0)
         attachRockLines(to: asteroid, points: rockPoints, endTrim: rockTrim)
         
         asteroidSizes[ObjectIdentifier(asteroid)] = size
@@ -1084,7 +1084,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let newAsteroid = SKShapeNode(path: createAsteroidPath(from: rockPoints))
             newAsteroid.strokeColor = .clear
             newAsteroid.lineWidth = 0
-            let rockTrim: CGFloat = size == .medium ? 0 : (size == .small ? -0.25 : 0)
+            let rockTrim: CGFloat = size == .medium ? 0 : (size == .small ? 0.1 : 0)
             attachRockLines(to: newAsteroid, points: rockPoints, endTrim: rockTrim)
             
             // Offset starting positions to prevent overlap
