@@ -554,7 +554,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let baseAngle = angleStep * CGFloat(i)
             let radiusVariation: CGFloat
             if Int.random(in: 0..<4) == 0 {
-                radiusVariation = CGFloat.random(in: 1.15...1.3)
+                radiusVariation = CGFloat.random(in: 1.1...1.2)
             } else {
                 radiusVariation = CGFloat.random(in: 0.85...1.05)
             }
@@ -2007,7 +2007,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Draw score
         let scoreNode = drawVectorNumber(score, at: CGPoint(x: size.width * 0.1, y: size.height * 0.95))
         scoreNode.name = "scoreNode"
-        scoreNode.alpha = 0.75
+        scoreNode.alpha = 0.7
         addChild(scoreNode)
     }
     
@@ -2018,7 +2018,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Draw high score
         let highScoreNode = drawVectorNumber(highScore, at: CGPoint(x: size.width * 0.5, y: size.height * 0.95))
         highScoreNode.name = "highScoreNode"
-        highScoreNode.alpha = 0.75
+        highScoreNode.alpha = 0.7
         addChild(highScoreNode)
     }
     
