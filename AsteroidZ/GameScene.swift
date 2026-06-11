@@ -554,7 +554,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let baseAngle = angleStep * CGFloat(i)
             let radiusVariation: CGFloat
             if Int.random(in: 0..<4) == 0 {
-                radiusVariation = CGFloat.random(in: 1.1...1.25)
+                radiusVariation = CGFloat.random(in: 1.15...1.3)
             } else {
                 radiusVariation = CGFloat.random(in: 0.85...1.05)
             }
