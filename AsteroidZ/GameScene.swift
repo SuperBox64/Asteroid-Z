@@ -693,6 +693,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             asteroid.name = "Roid"
         }
         
+        // One in three asteroids turns visibly
+        if Int.random(in: 0..<3) == 0 {
+            asteroid.physicsBody?.allowsRotation = true
+            asteroid.physicsBody?.angularVelocity = CGFloat.random(in: 0.8...2.0) * (Bool.random() ? 1 : -1)
+        }
+        
         // Common physics properties
         asteroid.physicsBody?.usesPreciseCollisionDetection = true  // Add this for better collision detection
         asteroid.physicsBody?.restitution = 1.0
@@ -1104,6 +1110,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 newAsteroid.physicsBody?.velocity = velocity
                 newAsteroid.name = "Newborn Roid"
 
+            }
+            
+            if Int.random(in: 0..<3) == 0 {
+                newAsteroid.physicsBody?.allowsRotation = true
+                newAsteroid.physicsBody?.angularVelocity = CGFloat.random(in: 0.8...2.0) * (Bool.random() ? 1 : -1)
             }
             
             newAsteroid.physicsBody?.affectedByGravity = false
