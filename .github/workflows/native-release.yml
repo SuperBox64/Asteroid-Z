@@ -11,43 +11,66 @@ on:
 jobs:
   macos:
     runs-on: macos-15
+    env:
+      HAVE_CERT: ${{ secrets.MACOS_CERT_P12 != '' }}
+      HAVE_NOTARY: ${{ secrets.NOTARY_KEY_ID != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
           repository: macOS26/superbox64-spritekit
           ref: embedded
-          path: ../superbox64-spritekit
+          path: superbox64-spritekit-src
+      - name: place framework as sibling
+        run: |
+          mkdir -p "$RUNNER_TEMP/sib"
+          mv superbox64-spritekit-src "$RUNNER_TEMP/sib/superbox64-spritekit"
+          ln -s "$RUNNER_TEMP/sib/superbox64-spritekit" ../superbox64-spritekit
       - name: toolchain
         run: |
           curl -sL https://download.swift.org/swift-6.3.2-release/xcode/swift-6.3.2-RELEASE/swift-6.3.2-RELEASE-osx.pkg -o /tmp/swift.pkg
           sudo installer -pkg /tmp/swift.pkg -target /
           brew install sdl3
-      - name: import signing cert
-        if: ${{ secrets.MACOS_CERT_P12 != '' }}
+      - name: import Developer ID certificate
+        if: env.HAVE_CERT == 'true'
         run: |
           echo "${{ secrets.MACOS_CERT_P12 }}" | base64 -d > /tmp/cert.p12
           security create-keychain -p ci ci.keychain
           security default-keychain -s ci.keychain
           security unlock-keychain -p ci ci.keychain
+          security set-keychain-settings -lut 21600 ci.keychain
           security import /tmp/cert.p12 -k ci.keychain -P "${{ secrets.MACOS_CERT_PASSWORD }}" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -s -k ci ci.keychain
-      - name: build + bundle
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k ci ci.keychain
+          rm /tmp/cert.p12
+      - name: build, bundle, SIGN
+        if: env.HAVE_CERT == 'true'
         env:
           SIGN_ID: ${{ secrets.MACOS_SIGN_ID }}
-          NOTARY_PROFILE: ''
+        run: |
+          ./../superbox64-spritekit/native/build-sdl3-static.sh 2>/dev/null || ../superbox64-spritekit/native/build-sdl3-static.sh
+          native-direct/release/build-macos.sh
+      - name: build unsigned (no cert secrets configured)
+        if: env.HAVE_CERT != 'true'
+        env:
+          SIGN_ID: '-'
         run: |
           ../superbox64-spritekit/native/build-sdl3-static.sh
           native-direct/release/build-macos.sh
-      - name: notarize
-        if: ${{ secrets.NOTARY_KEY_ID != '' }}
+      - name: NOTARIZE + staple
+        if: env.HAVE_CERT == 'true' && env.HAVE_NOTARY == 'true'
         run: |
-          xcrun notarytool store-credentials CI --key-id "${{ secrets.NOTARY_KEY_ID }}" \
-            --issuer "${{ secrets.NOTARY_ISSUER }}" --key <(echo "${{ secrets.NOTARY_KEY_P8 }}" | base64 -d)
-          xcrun notarytool submit native-direct/release/out/AsteroidZ-macos.zip --keychain-profile CI --wait
+          echo "${{ secrets.NOTARY_KEY_P8 }}" | base64 -d > /tmp/notary.p8
+          xcrun notarytool submit native-direct/release/out/AsteroidZ-macos.zip \
+            --key /tmp/notary.p8 --key-id "${{ secrets.NOTARY_KEY_ID }}" \
+            --issuer "${{ secrets.NOTARY_ISSUER }}" --wait
           xcrun stapler staple native-direct/release/out/AsteroidZ.app
+          rm -f /tmp/notary.p8 native-direct/release/out/AsteroidZ-macos.zip
+          ditto -c -k --keepParent native-direct/release/out/AsteroidZ.app native-direct/release/out/AsteroidZ-macos.zip
+          spctl --assess --type execute native-direct/release/out/AsteroidZ.app && echo "GATEKEEPER PASS"
       - uses: actions/upload-artifact@v4
-        with: { name: AsteroidZ-macos, path: native-direct/release/out/AsteroidZ-macos.zip }
+        with:
+          name: AsteroidZ-macos
+          path: native-direct/release/out/AsteroidZ-macos.zip
 
   linux:
     runs-on: ubuntu-24.04

@@ -30,7 +30,11 @@ cat > "$BUNDLE/Contents/Info.plist" <<PLIST
 PLIST
 echo "APPL????" > "$BUNDLE/Contents/PkgInfo"
 
-codesign --force --options runtime --timestamp --sign "$SIGN_ID" "$BUNDLE"
+if [ "$SIGN_ID" = "-" ]; then
+  codesign --force --sign - "$BUNDLE"
+else
+  codesign --force --options runtime --timestamp --sign "$SIGN_ID" "$BUNDLE"
+fi
 codesign --verify --strict "$BUNDLE"
 echo "✓ signed: $SIGN_ID"
 
