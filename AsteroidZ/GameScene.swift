@@ -552,8 +552,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         pts.reserveCapacity(total)
         for i in 0..<total {
             let baseAngle = angleStep * CGFloat(i)
-            let radiusVariation = i % 2 == 0 ? CGFloat.random(in: 0.8...0.95)
-                                             : CGFloat.random(in: 1.1...1.35)
+            let radiusVariation: CGFloat
+            if Int.random(in: 0..<4) == 0 {
+                radiusVariation = CGFloat.random(in: 1.1...1.25)
+            } else {
+                radiusVariation = CGFloat.random(in: 0.85...1.05)
+            }
             let currentRadius = radius * radiusVariation
             pts.append(CGPoint(x: cos(baseAngle) * currentRadius,
                                y: sin(baseAngle) * currentRadius))
