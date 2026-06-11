@@ -576,10 +576,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         for i in 0..<pts.count {
             let a = pts[i]
             let b = pts[(i + 1) % pts.count]
-            let overhang: CGFloat = -0.1
+            let inset: CGFloat = 0.07
             let line = CGMutablePath()
-            line.move(to: CGPoint(x: a.x + (b.x - a.x) * overhang, y: a.y + (b.y - a.y) * overhang))
-            line.addLine(to: CGPoint(x: b.x - (b.x - a.x) * overhang, y: b.y - (b.y - a.y) * overhang))
+            line.move(to: CGPoint(x: a.x + (b.x - a.x) * inset, y: a.y + (b.y - a.y) * inset))
+            line.addLine(to: CGPoint(x: b.x - (b.x - a.x) * inset, y: b.y - (b.y - a.y) * inset))
             let seg = SKShapeNode(path: line)
             seg.strokeColor = SKColor(white: 1, alpha: 0.65)
             seg.lineWidth = 2.0
