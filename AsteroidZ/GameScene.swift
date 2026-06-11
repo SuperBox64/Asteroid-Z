@@ -500,6 +500,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Draw level number at bottom left
         let levelNode = drawVectorNumber(level, at: CGPoint(x: size.width * 0.05, y: size.height * 0.05))
         levelNode.name = "levelNode"
+        levelNode.alpha = 0.7
         addChild(levelNode)
     }
     
@@ -2176,7 +2177,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let glow = SKAction.sequence([
             SKAction.customAction(withDuration: 4.0) { node, time in
                 let progress = time / 2.0
-                let alpha = 0.675 + sin(progress * .pi * 2) * 0.175  // Oscillates between 0.5 and 0.85
+                let alpha = 0.6 + sin(progress * .pi * 2) * 0.2  // Oscillates between 0.4 and 0.8
                 node.alpha = alpha
             }
         ])
