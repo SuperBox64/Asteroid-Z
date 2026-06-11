@@ -581,12 +581,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     // Retro look: every edge is its own transparent straight line, with a
     // small gap at each vertex (the hero ship treatment, rock-shaped)
-    func attachRockLines(to node: SKShapeNode, points pts: [CGPoint]) {
+    func attachRockLines(to node: SKShapeNode, points pts: [CGPoint], endTrim: CGFloat = 0) {
         for i in 0..<pts.count {
             let a = pts[i]
             let b = pts[(i + 1) % pts.count]
             let len = hypot(b.x - a.x, b.y - a.y)
-            let d = 0 / max(len, 0.001)
+            let d = endTrim / max(len, 0.001)
             let line = CGMutablePath()
             line.move(to: CGPoint(x: a.x + (b.x - a.x) * d, y: a.y + (b.y - a.y) * d))
             line.addLine(to: CGPoint(x: b.x - (b.x - a.x) * d, y: b.y - (b.y - a.y) * d))
@@ -683,7 +683,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let asteroid = SKShapeNode(path: asteroidPath)
         asteroid.strokeColor = .clear
         asteroid.lineWidth = 0
-        attachRockLines(to: asteroid, points: rockPoints)
+        let rockTrim: CGFloat = size == .medium ? 0.5 : (size == .small ? 1.0 : 0)
+        attachRockLines(to: asteroid, points: rockPoints, endTrim: rockTrim)
         
         asteroidSizes[ObjectIdentifier(asteroid)] = size
         
@@ -1083,7 +1084,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let newAsteroid = SKShapeNode(path: createAsteroidPath(from: rockPoints))
             newAsteroid.strokeColor = .clear
             newAsteroid.lineWidth = 0
-            attachRockLines(to: newAsteroid, points: rockPoints)
+            let rockTrim: CGFloat = size == .medium ? 0.5 : (size == .small ? 1.0 : 0)
+            attachRockLines(to: newAsteroid, points: rockPoints, endTrim: rockTrim)
             
             // Offset starting positions to prevent overlap
             let offsetDistance = size.radius * 2 // Ensure they start separated
