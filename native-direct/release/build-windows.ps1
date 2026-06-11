@@ -4,7 +4,7 @@
 # build once proven; the output contract is identical either way.
 $ErrorActionPreference = "Stop"
 Set-Location "$PSScriptRoot\.."
-$FW = Resolve-Path "..\..\superbox64-spritekit"
+$FW = Resolve-Path "..\..\SuperBox64Kit"
 $VCPKG = "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static"
 $B = New-Item -ItemType Directory -Path ([System.IO.Path]::GetTempPath() + [System.Guid]::NewGuid())
 

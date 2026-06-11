@@ -3,7 +3,7 @@
 # Embedded Swift x86_64 binary + .deb. SDL3 built static, minimal subsystems.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-FW="${FW:-$(cd ../../superbox64-spritekit && pwd)}"
+FW="${FW:-$(cd ../../SuperBox64Kit && pwd)}"
 VER="${VERSION:-1.0.0}"
 ARCH="$(dpkg --print-architecture 2>/dev/null || echo amd64)"
 TRIPLE="$( [ "$ARCH" = arm64 ] && echo aarch64-unknown-linux-gnu || echo x86_64-unknown-linux-gnu )"

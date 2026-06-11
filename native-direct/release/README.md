@@ -14,7 +14,7 @@ NOTARY_PROFILE=MyProfile native-direct/release/build-macos.sh   # after notaryto
 ```
 
 CI: `.github/workflows/native-release.yml` - dispatch manually or push a
-`native-v*` tag. Jobs check out superbox64-spritekit@embedded from GitHub,
+`native-v*` tag. Jobs check out SuperBox64Kit@embedded from GitHub,
 so the framework's local commits MUST be pushed before CI builds match.
 
 The macOS lane signs and notarizes IN CI. Required repo secrets:

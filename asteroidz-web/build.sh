@@ -13,15 +13,15 @@
 set -eo pipefail
 
 # The runtime lives in its OWN repo, a sibling of the AsteroidZ repo (never a
-# nested clone inside it). Dev: ../../superbox64-wasmkit is the working
+# nested clone inside it). Dev: ../../WasmKit is the working
 # checkout and is used as-is. CI: cloned to that same spot, outside the repo.
 # Resolved from the script's location so the clone target never depends on
 # the caller's working directory.
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-WASMKIT="$SCRIPT_DIR/../../superbox64-wasmkit"
+WASMKIT="$SCRIPT_DIR/../../WasmKit"
 if [ ! -d "$WASMKIT" ]; then
-  echo "→ Cloning superbox64-wasmkit..."
-  git clone https://github.com/macOS26/superbox64-wasmkit "$WASMKIT"
+  echo "→ Cloning WasmKit..."
+  git clone https://github.com/SuperBox64/WasmKit "$WASMKIT"
 fi
 
 SWIFT_TOOLCHAIN="${SWIFT_TOOLCHAIN:-org.swift.6.3.2-release}"

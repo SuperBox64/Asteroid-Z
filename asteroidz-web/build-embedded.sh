@@ -13,8 +13,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Framework: local sibling checkout (dev) or the SwiftPM checkout (CI).
-FW="$(cd "$ROOT/../superbox64-spritekit" 2>/dev/null && pwd || true)"
-[ -d "$FW/Sources/SpriteKit" ] || FW="$(find "$ROOT/asteroidz-web/.build" -maxdepth 3 -type d -name superbox64-spritekit 2>/dev/null | head -1)"
+FW="$(cd "$ROOT/../SuperBox64Kit" 2>/dev/null && pwd || true)"
+[ -d "$FW/Sources/SpriteKit" ] || FW="$(find "$ROOT/asteroidz-web/.build" -maxdepth 3 -type d -name SuperBox64Kit 2>/dev/null | head -1)"
 GAMESRC="$ROOT/asteroidz-web/Sources/AsteroidZ"
 # Derive the toolchain + wasm SDK locations (portable: works locally and in CI).
 TC="$(dirname "$(dirname "$(xcrun --toolchain swift -f swiftc)")")"   # .../usr/bin/swiftc -> .../usr -> toolchain/usr

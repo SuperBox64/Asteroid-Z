@@ -10,5 +10,5 @@ GAME_SRC="$GAME_SRC" \
 GAME_MAIN="$(pwd)/main.swift" \
 ASSETS_DIR="$(cd ../asteroidz-web/web/assets/sfx && pwd)" \
 OUT="$(pwd)/asteroidz-direct" \
-  ../../superbox64-spritekit/native/build-native-game.sh
+  ../../SuperBox64Kit/native/build-native-game.sh
 rm -rf game-src

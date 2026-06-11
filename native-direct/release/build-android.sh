@@ -5,7 +5,7 @@
 # the runner image.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-FW="${FW:-$(cd ../../superbox64-spritekit && pwd)}"
+FW="${FW:-$(cd ../../SuperBox64Kit && pwd)}"
 SDLVER="${SDL_VER:-3.4.10}"
 API=28
 TRIPLE=aarch64-unknown-linux-android$API
