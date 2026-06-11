@@ -545,42 +545,53 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
-    func createAsteroidPath(radius: CGFloat, points: Int) -> CGPath {
-        let path = CGMutablePath()
+    func createAsteroidPoints(radius: CGFloat, points: Int) -> [CGPoint] {
         let angleStep = (CGFloat.pi * 2) / CGFloat(points)
-        
-        var firstPoint = CGPoint()
-        
-        // Create more points for smoother shape
         let totalPoints = points * 3
-        
+        var pts = [CGPoint]()
+        pts.reserveCapacity(totalPoints)
         for i in 0..<totalPoints {
             let baseAngle = angleStep * CGFloat(i) / 3.0
-            
-            // Create occasional inward/outward variations
             let radiusVariation: CGFloat
             if i % 3 == 0 {
-                // Main points stay closer to circle
                 radiusVariation = CGFloat.random(in: 0.9...1.1)
             } else {
-                // Intermediate points can vary more dramatically
                 radiusVariation = CGFloat.random(in: 0.7...1.2)
             }
-            
             let currentRadius = radius * radiusVariation
-            let x = cos(baseAngle) * currentRadius
-            let y = sin(baseAngle) * currentRadius
-            
-            if i == 0 {
-                firstPoint = CGPoint(x: x, y: y)
-                path.move(to: firstPoint)
-            } else {
-                path.addLine(to: CGPoint(x: x, y: y))
-            }
+            pts.append(CGPoint(x: cos(baseAngle) * currentRadius,
+                               y: sin(baseAngle) * currentRadius))
         }
-        
-        path.addLine(to: firstPoint)
+        return pts
+    }
+
+    func createAsteroidPath(from pts: [CGPoint]) -> CGPath {
+        let path = CGMutablePath()
+        path.move(to: pts[0])
+        for p in pts.dropFirst() { path.addLine(to: p) }
+        path.addLine(to: pts[0])
         return path
+    }
+
+    func createAsteroidPath(radius: CGFloat, points: Int) -> CGPath {
+        createAsteroidPath(from: createAsteroidPoints(radius: radius, points: points))
+    }
+
+    // Retro look: every edge is its own transparent straight line, with a
+    // small gap at each vertex (the hero ship treatment, rock-shaped)
+    func attachRockLines(to node: SKShapeNode, points pts: [CGPoint]) {
+        for i in 0..<pts.count {
+            let a = pts[i]
+            let b = pts[(i + 1) % pts.count]
+            let inset: CGFloat = 0.07
+            let line = CGMutablePath()
+            line.move(to: CGPoint(x: a.x + (b.x - a.x) * inset, y: a.y + (b.y - a.y) * inset))
+            line.addLine(to: CGPoint(x: b.x - (b.x - a.x) * inset, y: b.y - (b.y - a.y) * inset))
+            let seg = SKShapeNode(path: line)
+            seg.strokeColor = SKColor(white: 1, alpha: 0.7)
+            seg.lineWidth = 2.0
+            node.addChild(seg)
+        }
     }
     
     func spawnAsteroid(size: AsteroidSize) {
@@ -663,10 +674,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func createAsteroid(size: AsteroidSize) -> SKShapeNode {
-        let asteroidPath = createAsteroidPath(radius: size.radius, points: size.points)
+        let rockPoints = createAsteroidPoints(radius: size.radius, points: size.points)
+        let asteroidPath = createAsteroidPath(from: rockPoints)
         let asteroid = SKShapeNode(path: asteroidPath)
-        asteroid.strokeColor = SKColor(white: 1, alpha: 0.7)
-        asteroid.lineWidth = 2.0
+        asteroid.strokeColor = .clear
+        asteroid.lineWidth = 0
+        attachRockLines(to: asteroid, points: rockPoints)
         
         asteroidSizes[ObjectIdentifier(asteroid)] = size
         
@@ -1057,9 +1070,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let splitAngles: [CGFloat] = [0, .pi] // Opposite directions
         
         for i in 0..<count {
-            let newAsteroid = SKShapeNode(path: createAsteroidPath(radius: size.radius, points: size.points))
-            newAsteroid.strokeColor = SKColor(white: 1, alpha: 0.7)
-            newAsteroid.lineWidth = 2.0
+            let rockPoints = createAsteroidPoints(radius: size.radius, points: size.points)
+            let newAsteroid = SKShapeNode(path: createAsteroidPath(from: rockPoints))
+            newAsteroid.strokeColor = .clear
+            newAsteroid.lineWidth = 0
+            attachRockLines(to: newAsteroid, points: rockPoints)
             
             // Offset starting positions to prevent overlap
             let offsetDistance = size.radius * 2 // Ensure they start separated
