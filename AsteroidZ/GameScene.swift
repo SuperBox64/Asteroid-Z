@@ -546,10 +546,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func createAsteroidPoints(radius: CGFloat, points: Int) -> [CGPoint] {
-        let angleStep = (CGFloat.pi * 2) / CGFloat(points)
+        let total = points * 2
+        let angleStep = (CGFloat.pi * 2) / CGFloat(total)
         var pts = [CGPoint]()
-        pts.reserveCapacity(points)
-        for i in 0..<points {
+        pts.reserveCapacity(total)
+        for i in 0..<total {
             let baseAngle = angleStep * CGFloat(i)
             let currentRadius = radius * CGFloat.random(in: 0.8...1.15)
             pts.append(CGPoint(x: cos(baseAngle) * currentRadius,
