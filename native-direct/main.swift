@@ -61,7 +61,7 @@ enum Main {
             }
 
             let used = SDL_GetTicksNS() - now
-            if used < 16_666_666 { SDL_DelayNS(16_666_666 - used) }
+            if used < 4_000_000 { SDL_DelayNS(2_000_000) }
         }
         SDL_Quit()
     }
