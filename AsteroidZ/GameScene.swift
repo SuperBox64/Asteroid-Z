@@ -1989,6 +1989,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Draw score
         let scoreNode = drawVectorNumber(score, at: CGPoint(x: size.width * 0.1, y: size.height * 0.95))
         scoreNode.name = "scoreNode"
+        scoreNode.alpha = 0.75
         addChild(scoreNode)
     }
     
@@ -1999,19 +2000,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Draw high score
         let highScoreNode = drawVectorNumber(highScore, at: CGPoint(x: size.width * 0.5, y: size.height * 0.95))
         highScoreNode.name = "highScoreNode"
+        highScoreNode.alpha = 0.75
         addChild(highScoreNode)
     }
     
     private func createLivesShip(at pos: CGPoint) -> SKNode {
-        let path = CGMutablePath()
-        path.move(to: CGPoint(x: 0, y: 12.5))    // Top point
-        path.addLine(to: CGPoint(x: -7.5, y: -12.5)) // Bottom left
-        path.addLine(to: CGPoint(x: 7.5, y: -12.5))  // Bottom right
-        path.closeSubpath()
-        
-        let shipShape = SKShapeNode(path: path)
-        shipShape.strokeColor = SKColor(white: 1, alpha: 0.7)
-        shipShape.lineWidth = 2.0
+        // Same formation as the hero ship: three separate lines that don't touch
+        let shipShape = SKShapeNode()
+        attachShipLines(to: shipShape)
+        shipShape.setScale(12.5 / 20.0)
         shipShape.position = pos
         return shipShape
     }
