@@ -13,6 +13,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     private var player: SKShapeNode!
     private var rotationRate: CGFloat = 0
+    private var lastUpdateTime: TimeInterval = 0
     private var thrustDirection: CGFloat = 0
 
     // MARK: - On-screen touch controls (stick/dpad + fire on the opposite side)
@@ -857,9 +858,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     override func update(_ currentTime: TimeInterval) {
+        // Real frame delta so behavior is identical at every refresh rate
+        let dt = lastUpdateTime > 0 ? CGFloat(min(currentTime - lastUpdateTime, 1.0 / 30.0)) : CGFloat(1.0 / 60.0)
+        lastUpdateTime = currentTime
+        
         // Move rotation update to the start and ensure it always happens
         if let currentPlayer = player, rotationRate != 0 {
-            currentPlayer.zRotation += rotationRate * CGFloat(0.05)
+            currentPlayer.zRotation += rotationRate * 3.0 * dt
         }
         
         // Apply thrust and play sound
@@ -905,9 +910,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
         
-        // Apply friction
-        velocity.dx *= 0.99
-        velocity.dy *= 0.99
+        // Apply friction (per-second decay, frame-rate independent)
+        let friction = pow(CGFloat(0.99), dt * 60)
+        velocity.dx *= friction
+        velocity.dy *= friction
         
         
         // ONLY bullets can destroy asteroids
@@ -961,7 +967,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         // Update saucer movement
         if let saucer = activeSaucer, let velocity = saucer.physicsBody?.velocity {
             // Calculate distance traveled since last frame
-            let deltaDistance = sqrt(velocity.dx * velocity.dx + velocity.dy * velocity.dy) * CGFloat(1.0/60.0)
+            let deltaDistance = sqrt(velocity.dx * velocity.dx + velocity.dy * velocity.dy) * dt
             saucerDistanceTraveled += deltaDistance
             
             // Change direction every 300 pixels
