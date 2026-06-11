@@ -272,7 +272,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             let a = pts[i]
             let b = pts[(i + 1) % 3]
             let len = hypot(b.x - a.x, b.y - a.y)
-            let inset = max(0, len * 0.08 - 0.5) / max(len, 0.001)
+            let inset = max(0, len * 0.08 - 1.0) / max(len, 0.001)
             let ax = a.x + (b.x - a.x) * inset
             let ay = a.y + (b.y - a.y) * inset
             let bx = b.x - (b.x - a.x) * inset
