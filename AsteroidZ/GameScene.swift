@@ -880,11 +880,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             
             // Play thrust sound in spurts
             if action(forKey: "thrustSound") == nil {
-                let playSound = SKAction.group([
-                    SKAction.changeVolume(to: 0.5, duration: 0),
-                    SKAction.playSoundFileNamed("thrust.wav", waitForCompletion: false)
+                let playSound = SKAction.sequence([
+                    SKAction.playSoundFileNamed("thrust.wav", waitForCompletion: false),
+                    SKAction.wait(forDuration: 0.25)
                 ])
-                run(playSound)
+                run(playSound, withKey: "thrustSound")
             }
         } else {
             // Hide thrust visual and stop sound when not thrusting
