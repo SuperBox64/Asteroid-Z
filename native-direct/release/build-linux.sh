@@ -60,6 +60,7 @@ for m in SpriteKit AppKit GameplayKit GameController; do build_mod "$m"; done
 mkdir -p "$B/src/game"
 sed -e 's/@MainActor//g' "../asteroidz-web/Sources/AsteroidZ/GameScene.swift" > "$B/src/game/GameScene.swift"
 sed -e 's/@MainActor//g' "$FW/native/sdl3-backend.swift" > "$B/src/game/sdl3-backend.swift"
+sed -e 's/@MainActor//g' "$FW/native/kit-shader.swift" > "$B/src/game/kit-shader.swift"
 cp main.swift "$B/src/game/native-main.swift"
 swiftc "${EMB[@]}" -module-name GameNative -c "$B/src/game"/*.swift -o "$B/mod/game.o"
 
