@@ -88,9 +88,8 @@ jobs:
           sudo apt-get update && sudo apt-get install -y clang cmake ninja-build \
             libx11-dev libxext-dev libwayland-dev libxkbcommon-dev libegl-dev \
             libasound2-dev libpulse-dev libpipewire-0.3-dev
-          curl -sL https://swiftlang.github.io/swiftly/swiftly-install.sh | bash -s -- -y
-          ~/.local/share/swiftly/bin/swiftly install 6.3.2
-          echo "$HOME/.local/share/swiftly/bin" >> $GITHUB_PATH
+          curl -sL https://download.swift.org/swift-6.3.2-release/ubuntu2404/swift-6.3.2-RELEASE/swift-6.3.2-RELEASE-ubuntu24.04.tar.gz | tar xz -C "$HOME"
+          echo "$HOME/swift-6.3.2-RELEASE-ubuntu24.04/usr/bin" >> "$GITHUB_PATH"
       - name: build bin + deb
         run: FW="$(cd ../SuperBox64Kit && pwd)" native-direct/release/build-linux.sh
         working-directory: .
@@ -152,10 +151,9 @@ jobs:
         run: mv SuperBox64Kit-src ../SuperBox64Kit
       - name: toolchains
         run: |
-          curl -sL https://swiftlang.github.io/swiftly/swiftly-install.sh | bash -s -- -y
-          ~/.local/share/swiftly/bin/swiftly install 6.3.2
-          echo "$HOME/.local/share/swiftly/bin" >> $GITHUB_PATH
-          swift sdk install https://github.com/swift-android-sdk/swift-android-sdk/releases/latest/download/swift-android.artifactbundle.tar.gz || true
+          curl -sL https://download.swift.org/swift-6.3.2-release/ubuntu2404/swift-6.3.2-RELEASE/swift-6.3.2-RELEASE-ubuntu24.04.tar.gz | tar xz -C "$HOME"
+          echo "$HOME/swift-6.3.2-RELEASE-ubuntu24.04/usr/bin" >> "$GITHUB_PATH"
+          "$HOME/swift-6.3.2-RELEASE-ubuntu24.04/usr/bin/swift" sdk install https://github.com/swift-android-sdk/swift-android-sdk/releases/latest/download/swift-android.artifactbundle.tar.gz || true
       - name: build apk
         run: native-direct/release/build-android.sh
       - name: sign apk
