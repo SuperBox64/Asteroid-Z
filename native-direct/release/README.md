@@ -23,7 +23,7 @@ The macOS lane signs and notarizes IN CI. Required repo secrets:
 |---|---|
 | MACOS_CERT_P12 | base64 of the Developer ID Application .p12 export |
 | MACOS_CERT_PASSWORD | the .p12 password |
-| MACOS_SIGN_ID | "Developer ID Application: Todd Bruss (469UCUB275)" |
+| MACOS_SIGN_ID | "Developer ID Application: Heisenburg (469UCUB275)" |
 | NOTARY_KEY_ID | App Store Connect API key id |
 | NOTARY_ISSUER | App Store Connect issuer id |
 | NOTARY_KEY_P8 | base64 of the AuthKey_XXXX.p8 |
