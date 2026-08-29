@@ -104,6 +104,8 @@ jobs:
     # documents the path and fails soft. Signing gated on WINDOWS_CERT_PFX.
     runs-on: windows-2025
     continue-on-error: true
+    env:
+      HAVE_CERT: ${{ secrets.WINDOWS_CERT_PFX != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -119,7 +121,7 @@ jobs:
         shell: pwsh
         run: native-direct/release/build-windows.ps1
       - name: sign
-        if: ${{ secrets.WINDOWS_CERT_PFX != '' }}
+        if: env.HAVE_CERT == 'true'
         shell: pwsh
         run: |
           [IO.File]::WriteAllBytes("cert.pfx", [Convert]::FromBase64String("${{ secrets.WINDOWS_CERT_PFX }}"))
@@ -132,6 +134,8 @@ jobs:
     # libmain.so; apk signing gated on ANDROID_KEYSTORE.
     runs-on: ubuntu-24.04
     continue-on-error: true
+    env:
+      HAVE_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -148,7 +152,7 @@ jobs:
       - name: build apk
         run: native-direct/release/build-android.sh
       - name: sign apk
-        if: ${{ secrets.ANDROID_KEYSTORE != '' }}
+        if: env.HAVE_KEYSTORE == 'true'
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > ks.jks
           $ANDROID_HOME/build-tools/35.0.0/apksigner sign --ks ks.jks \
