@@ -86,6 +86,7 @@ open(sys.argv[2], "w").write("\n".join(lines) + "\n")
 PYEOF
 clang -c -O2 -I "$FW/Sources/KitABI/include" "$B/stubs.c" -o "$B/mod/stubs.o"
 clang -c -O2 -I "$FW/Sources/KitABI/include" "$FW/Sources/KitABI/shim.c" -o "$B/mod/shim.o"
+clang -c -O2 ${KIT_STB_CFLAGS:-} -I "$FW/native" "$FW/native/kit_stb.c" -o "$B/mod/kit_stb.o"
 
 TC="$(dirname "$(dirname "$(command -v swiftc)")")"
 ASSETS_DIR="$(cd ../asteroidz-web/web/assets/sfx && pwd)"
