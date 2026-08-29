@@ -87,6 +87,9 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y clang cmake ninja-build \
             libx11-dev libxext-dev libwayland-dev libxkbcommon-dev libegl-dev \
+            libxcursor-dev libxi-dev libxrandr-dev libxfixes-dev libxrender-dev \
+            libxss-dev libgl-dev libdbus-1-dev libudev-dev libdrm-dev libgbm-dev \
+            wayland-protocols libdecor-0-dev \
             libasound2-dev libpulse-dev libpipewire-0.3-dev
           curl -sL https://download.swift.org/swift-6.3.2-release/ubuntu2404/swift-6.3.2-RELEASE/swift-6.3.2-RELEASE-ubuntu24.04.tar.gz | tar xz -C "$HOME"
           echo "$HOME/swift-6.3.2-RELEASE-ubuntu24.04/usr/bin" >> "$GITHUB_PATH"
