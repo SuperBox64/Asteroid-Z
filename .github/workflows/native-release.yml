@@ -80,7 +80,9 @@ jobs:
         with:
           repository: SuperBox64/SuperBox64Kit
           ref: embedded
-          path: ../SuperBox64Kit
+          path: SuperBox64Kit-src
+      - name: place framework as sibling
+        run: mv SuperBox64Kit-src ../SuperBox64Kit
       - name: toolchain
         run: |
           sudo apt-get update && sudo apt-get install -y clang cmake ninja-build \
@@ -112,7 +114,10 @@ jobs:
         with:
           repository: SuperBox64/SuperBox64Kit
           ref: embedded
-          path: ../SuperBox64Kit
+          path: SuperBox64Kit-src
+      - name: place framework as sibling
+        shell: pwsh
+        run: Move-Item SuperBox64Kit-src ..\SuperBox64Kit
       - uses: compnerd/gha-setup-swift@main
         with: { branch: swift-6.3.2-release, tag: 6.3.2-RELEASE }
       - name: SDL3 via vcpkg
@@ -142,7 +147,9 @@ jobs:
         with:
           repository: SuperBox64/SuperBox64Kit
           ref: embedded
-          path: ../SuperBox64Kit
+          path: SuperBox64Kit-src
+      - name: place framework as sibling
+        run: mv SuperBox64Kit-src ../SuperBox64Kit
       - name: toolchains
         run: |
           curl -sL https://swiftlang.github.io/swiftly/swiftly-install.sh | bash -s -- -y
