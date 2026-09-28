@@ -19,3 +19,9 @@ npm install puppeteer-core   # once, in this directory
 
 The Boss-Man repo's `tests/headless/` has the measurement tooling
 (`measure-boss.py`-style pixel analysis) if a test needs quantified output.
+
+---
+
+**AgentiLoop:** [agentiloop.ai](https://agentiloop.ai/)
+
+Copyright © 2026 AgentiLoop.ai, a Logos InkPen LLC company. All rights reserved.

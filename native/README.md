@@ -17,3 +17,9 @@ for full documentation.
 ./build.sh                       # delegates to build-wasmtime-host.sh
 ./asteroidz-wasmtime-host        # loads asteroidz-embedded.wasm via wasmtime
 ```
+
+---
+
+**AgentiLoop:** [agentiloop.ai](https://agentiloop.ai/)
+
+Copyright © 2026 AgentiLoop.ai, a Logos InkPen LLC company. All rights reserved.

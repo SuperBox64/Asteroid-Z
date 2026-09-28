@@ -39,3 +39,9 @@ Windows reality: Embedded Swift on COFF is unproven; the lane attempts it
 and documents a stdlib fallback (still a single native exe). Android uses
 SDL3's android-project template (SDLActivity + gradle) around a
 cross-compiled libmain.so; first CI run will drive out the wrinkles.
+
+---
+
+**AgentiLoop:** [agentiloop.ai](https://agentiloop.ai/)
+
+Copyright © 2026 AgentiLoop.ai, a Logos InkPen LLC company. All rights reserved.
